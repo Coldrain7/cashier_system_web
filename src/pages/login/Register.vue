@@ -100,7 +100,7 @@ export default {
       }
     },
     checkCode () {
-      if (this.code !== '') {
+      if (this.code.code !== '') {
         let result = checkCode(this.code).then(res => {
           // console.info(this.code)
           if (res.data === '验证成功') {

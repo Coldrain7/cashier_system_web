@@ -3,9 +3,9 @@
         <div class="login-wrapper"  id="identity" >
             <div class="header">请输入信息</div>
             <div class="form-wrapper">
-                <input type="text" name="to" placeholder="邮箱" class="input-item" v-model="query.to" style="width: 94%">
+                <input type="text" name="to" placeholder="登录账号" class="input-item" v-model="user.id" style="width: 94%">
                 <div style="display: flex; align-items: center;">
-                    <div style="margin-top: 16px"><input type="text" style="width: 84%" name="code" placeholder="验证码" class="input-item" v-model="query.code"></div>
+                    <div style="margin-top: 16px"><input type="text" style="width: 84%" name="code" placeholder="验证码" class="input-item" v-model="code"></div>
                     <el-button class="btn1" @click="sendCode" :disabled="isDisabled" style="margin-left: 10px">{{this.message}}</el-button>
                 </div>
                 <el-button class="btn2" @click="checkCode">验证</el-button>
@@ -17,28 +17,31 @@
         <div class="login-wrapper"  id="password" style="display: none">
             <div class="header">修改密码</div>
             <div class="form-wrapper">
-                <input type="text" name="password" placeholder="密码" class="input-item" v-model="password">
+                <input type="password" name="password" placeholder="输入新密码" class="input-item" v-model="password">
                 <input type="password" name="verifyPassword" placeholder="确认密码" class="input-item" v-model="verifyPassword">
-                <el-button class="btn" @click="changePasswordById" >修改</el-button>
+                <el-button class="btn" @click="changePasswordById" >重置密码</el-button>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import {changePasswordById, sendCode, checkCode, getUserByMail} from '@api/user'
+import {changePassword, sendCode, checkCode, getUserById} from '@api/user'
 export default {
   name: 'forgotPassword',
   data: function () {
     return {
-      username: '',
-      identity: '',
       password: '',
       verifyPassword: '',
+      code: '',
       id: '',
-      query: {
-        code: '',
-        to: ''
+      user: {
+        id: '',
+        supId: '',
+        name: '',
+        mail: '',
+        password: '',
+        type: '1'
       },
       isDisabled: false,
       seconds: 0,
@@ -47,7 +50,7 @@ export default {
   },
   methods: {
     nextStep () {
-      getUserByMail({mail: this.query.to}).then(res => {
+      getUserById({id: this.user.id}).then(res => {
         // 这里的res就是后端直接返回的json数据
         if (res.data !== null) {
           console.info(res)
@@ -61,19 +64,6 @@ export default {
           })
         }
       })
-      // getUserByUsernameAndIdentity({username: this.username, identity: this.identity}).then(res => {
-      //   // 这里的res就是后端直接返回的json数据
-      //   if (res.data !== null) {
-      //     this.id = res.data.id
-      //     document.getElementById('identity').style.display = 'none'
-      //     document.getElementById('password').style.display = ''
-      //   } else {
-      //     this.$message({
-      //       message: '输入的用户名或身份证号码错误',
-      //       type: 'warning'
-      //     })
-      //   }
-      // })
     },
     waitTime () {
       this.isDisabled = true
@@ -88,26 +78,36 @@ export default {
     },
     sendCode () {
       // console.info(this.query.to)
-      if (this.query.to !== '') {
-        sendCode(this.query).then(res => {
-          // console.info(res.data)
-          this.$message({
-            message: res.data,
-            type: 'success'
-          })
-          this.seconds = 20
-          this.waitTime()
+      if (this.user.id !== '') {
+        getUserById({id: this.user.id}).then(res => {
+          this.user.mail = res.data.mail
+          return sendCode(this.user)
+        }).then(res => {
+          if (res.data) {
+            // console.info(res.data)
+            this.$message({
+              message: '发送成功',
+              type: 'success'
+            })
+            this.seconds = 20
+            this.waitTime()
+          } else {
+            this.$message({
+              message: '账号错误',
+              type: 'warning'
+            })
+          }
         })
       } else {
         this.$message({
-          message: '请填写邮箱',
+          message: '请填写账号',
           type: 'warning'
         })
       }
     },
     checkCode () {
-      if (this.query.code !== '') {
-        checkCode(this.query).then(res => {
+      if (this.code !== '') {
+        checkCode({code: this.code}).then(res => {
           if (res.data === '验证成功') {
             this.$message({
               message: '验证成功',
@@ -129,34 +129,27 @@ export default {
       }
     },
     changePasswordById () {
-      this.$confirm('是否确定修改密码', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        var reg = /^[A-Za-z0-9]{1,20}$/
-        if (this.password !== this.verifyPassword) {
+      var reg = /^[A-Za-z0-9]{1,20}$/
+      if (this.password !== this.verifyPassword) {
+        this.$message({
+          message: '两次密码输入不一致',
+          type: 'warning'
+        })
+      } else if (!reg.test(this.password)) {
+        this.$message({
+          message: '密码只能由小于20位的大小写字母和数字构成',
+          type: 'warning'
+        })
+      } else {
+        changePassword({id: this.id, password: this.password}).then(res => {
           this.$message({
-            message: '两次密码输入不一致',
-            type: 'warning'
+            message: '修改成功',
+            type: 'success'
           })
-        } else if (!reg.test(this.password)) {
-          this.$message({
-            message: '密码只能由小于20位的大小写字母和数字构成',
-            type: 'warning'
-          })
-        } else {
-          changePasswordById({id: this.id, password: this.password}).then(res => {
-            this.$message({
-              message: '修改成功',
-              type: 'success'
-            })
-            // 可能是异步的方式运行的，放在外面的话不会显示提示
-            this.$router.push({path: '/login'})
-          })
-        }
-      }).catch(() => {
-      })
+          // 可能是异步的方式运行的，放在外面的话不会显示提示
+          this.$router.push({path: '/login'})
+        })
+      }
     },
     returnLogin () {
       window.history.go(-1)
