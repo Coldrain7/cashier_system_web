@@ -77,13 +77,20 @@ export default {
       // console.info(this.query.to)
       if (this.user.mail !== '') {
         sendCode(this.user).then(res => {
-          // console.info(res.data)
-          this.$message({
-            message: res.data,
-            type: 'success'
-          })
-          this.seconds = 20
-          this.waitTime()
+          if (res.data) {
+            // console.info(res.data)
+            this.$message({
+              message: '发送成功',
+              type: 'success'
+            })
+            this.seconds = 20
+            this.waitTime()
+          } else {
+            this.$message({
+              message: '邮箱地址错误',
+              type: 'warning'
+            })
+          }
         })
       } else {
         this.$message({
@@ -159,11 +166,11 @@ export default {
         })
           .then(res => {
             this.user.id = res.data
-            console.info('显示id信息')
-            console.info(this.user.id) // 这里应该可以看到id了
+            // console.info('显示id信息')
+            // console.info(this.user.id) // 这里应该可以看到id了
           })
           .then(() => {
-            console.info(this.user) // 这里应该可以看到完整的user对象了
+            // console.info(this.user) // 这里应该可以看到完整的user对象了
             registerMessage(this.user) // 确保传入的user对象是完整的
           })
         document.getElementById('register').style.display = 'none'
