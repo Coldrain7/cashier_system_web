@@ -32,19 +32,19 @@ const mainPage = [
       import(/* webpackChunkName: "Main" */ '../pages/main/Main'),
     children: [
       {
-        path: 'first',
-        name: 'first',
+        path: 'overview',
+        name: 'overview',
         component: () =>
             import(
-              /* webpackChunkName: "Second" */ '../pages/main/routes/first/First'
+              /* webpackChunkName: "Second" */ '../pages/main/routes/overview/Overview.vue'
             )
       },
       {
-        path: 'second/second',
-        name: 'second',
+        path: 'commodity/commodity',
+        name: 'commodity',
         component: () =>
             import(
-              /* webpackChunkName: "First" */ '../pages/main/routes/second/Second'
+              /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Commodity.vue'
             )
       },
       {
@@ -53,6 +53,14 @@ const mainPage = [
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/book/list'
+            )
+      },
+      {
+        path: 'member/member',
+        name: 'member',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/member/Member.vue'
             )
       }
     ]

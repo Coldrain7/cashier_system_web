@@ -8,18 +8,31 @@ export default {
           title: '图书列表'
         },
         {
-          path: '/main/first',
+          path: '/main/overview',
           icon: 'suncaper-menu-unfold',
-          title: '一级菜单1'
+          title: '概览'
         },
         {
-          path: '/main/second',
+          path: '/main/commodity',
           icon: 'suncaper-menu-unfold',
-          title: '一级菜单2',
-          group: 'second',
+          title: '商品',
+          group: 'commodity',
           children: [
             {
-              path: '/main/second/second',
+              path: '/main/commodity/commodity',
+              icon: 'suncaper-menu-unfold',
+              title: '商品资料'
+            }
+          ]
+        },
+        {
+          path: '/main/member',
+          icon: 'suncaper-menu-unfold',
+          title: '会员',
+          group: 'member',
+          children: [
+            {
+              path: '/main/member/member',
               icon: 'suncaper-menu-unfold',
               title: '二级菜单'
             }
