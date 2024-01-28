@@ -10,3 +10,4 @@ export const getUserById = query => {
   return http.GET(url, query)
 }
 export const changePassword = user => http.POST('./api/worker/changePassword', user)
+export const getSupIdById = user => http.GET('./api/worker/getSupId', user)
