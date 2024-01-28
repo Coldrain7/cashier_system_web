@@ -143,66 +143,115 @@
                 :total="total">
             </el-pagination>
 
-            <el-drawer :visible.sync="drawer" size="650px" :with-header="false">
-                <el-form :inline="true" :rules="rules" ref="form" label-width="0px" label-position="left" style="padding-top: 50px; padding-left: 5px">
-                    <el-form-item label=" " prop="name">
-                        <el-input v-model="form.name"><template slot="prepend">商品名称</template></el-input>
-                    </el-form-item>
-                    <el-form-item label=" " prop="barcode">
-                        <el-input v-model="form.barcode"><template slot="prepend">商品条码</template></el-input>
-                    </el-form-item>
-                    <el-form-item label=" " prop="price">
-                        <el-input v-model="form.price"><template slot="prepend">售价</template></el-input>
-                    </el-form-item>
-                    <el-form-item label=" " prop="purchase_price">
-                        <el-input v-model="form.purchase_price"><template slot="prepend">进价</template></el-input>
-                    </el-form-item>
-                    <el-form-item label=" ">
-                        <el-input v-model="form.inventory"><template slot="prepend">库存</template></el-input>
-                    </el-form-item>
-                    <el-form-item label="会员折扣" label-width="80px">
-                        <el-switch v-model="form.isDiscount">
-                        </el-switch>
-                    </el-form-item>
-                    <el-form-item label=" ">
-                        <el-input v-model="form.wholesalePrice"><template slot="prepend">批发价</template></el-input>
-                    </el-form-item>
-                    <el-form-item label="商品分类" label-width="80px">
+            <el-drawer :visible.sync="drawer" size="610px" :with-header="false">
+                <el-form :model="form" :rules="rules" ref="form" label-width="0px" label-position="left" style="padding-top: 50px; padding-left: 5px">
+                    <div  style="width: 600px;">
+                        <el-form-item prop="name">
+                            <el-input v-model="form.name" >
+                                <template slot="prepend"><a style="color: red">* </a>商品名称</template>
+                            </el-input>
+                        </el-form-item>
+                    </div>
+                    <div  style="width: 600px;">
+                        <el-form-item prop="barcode">
+                            <el-input v-model="form.barcode">
+                                <template slot="prepend"><a style="color: red">* </a>商品条码</template>
+                            </el-input>
+                        </el-form-item>
+                    </div>
+                    <div class="flex-container">
+                        <div  style="width: 200px;">
+                            <el-form-item prop="purchase_price">
+                                <el-input v-model="form.purchasePrice">
+                                    <template slot="prepend"><a style="color: red">* </a>进价</template>
+                                </el-input>
+                            </el-form-item>
+                        </div>
+                        <div  style="width: 200px;">
+                            <el-form-item prop="price">
+                                <el-input v-model="form.price">
+                                    <template slot="prepend"><a style="color: red">* </a>售价</template>
+                                </el-input>
+                            </el-form-item>
+                        </div>
+                        <div  style="width: 200px;">
+                            <el-form-item prop="inventory">
+                                <el-input v-model="form.inventory">
+                                    <template slot="prepend">库存</template>
+                                </el-input>
+                            </el-form-item>
+                        </div>
+                    </div>
+                    <div class="flex-container">
+                        <el-form-item label="会员折扣" label-width="80px" style="padding-left: 20px;width: 100px">
+                            <el-switch v-model="form.isDiscount">
+                            </el-switch>
+                        </el-form-item>
+                        <el-form-item style="padding-left: 50px;width: 250px">
+                            <el-input v-model="form.wholesalePrice"><template slot="prepend">批发价</template></el-input>
+                        </el-form-item>
+                        <el-form-item style="width: 300px;padding-right: 5px">
+                            <el-input v-model="form.specification"><template slot="prepend">商品规格</template></el-input>
+                        </el-form-item>
+                    </div>
+                    <div class="flex-container">
+                        <el-form-item label="商品分类" label-width="80px">
+                            <template>
+                                <el-select v-model="form.claId" placeholder="选择分类" style="width: 220px">
+                                    <el-option
+                                        v-for="item in classificationOptions"
+                                        :key="item.id"
+                                        :label="item.classification"
+                                        :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                        </el-form-item>
+                        <el-form-item label="单位" label-width="40px" style="padding-left: 20px;">
+                            <template>
+                                <el-select v-model="form.unitId" placeholder="选择单位" style="width: 240px;">
+                                    <el-option
+                                        v-for="item in unitOptions"
+                                        :key="item.id"
+                                        :label="item.unit"
+                                        :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                        </el-form-item>
+                    </div>
+                    <el-form-item label="供货商" label-width="60px">
                         <template>
-                            <el-select v-model="form.claId" placeholder="选择分类">
+                            <el-select v-model="form.supplierId" style="width: 540px" placeholder="选择供货商">
                                 <el-option
-                                    v-for="item in classificationOptions"
+                                    v-for="item in supplierOptions"
                                     :key="item.id"
-                                    :label="item.classification"
+                                    :label="item.name"
                                     :value="item.id">
                                 </el-option>
                             </el-select>
                         </template>
                     </el-form-item>
-                    <el-form-item label="单位" label-width="40px">
-                        <template>
-                            <el-select v-model="form.unitId" placeholder="选择单位">
-                                <el-option
-                                    v-for="item in classificationOptions"
-                                    :key="item.id"
-                                    :label="item.classification"
-                                    :value="item.id">
-                                </el-option>
-                            </el-select>
-                        </template>
-                    </el-form-item>
-                    <el-form-item label=" ">
-                        <el-input v-model="form.specification"><template slot="prepend">商品规格</template></el-input>
-                    </el-form-item>
-                    <el-form-item label=" ">
-                        <el-input v-model="form.supplier"><template slot="prepend">供应商</template></el-input>
-                    </el-form-item>
-                    <el-form-item label=" ">
-                        <el-input v-model="form.produceDate"> <template slot="prepend">生产日期</template></el-input>
-                    </el-form-item>
-                    <el-form-item label=" ">
-                        <el-input v-model="form.expirationTime"><template slot="prepend">保质期</template></el-input>
-                    </el-form-item>
+                    <div class="flex-container">
+                        <div>
+                            <label class="el-form-item__label">生产日期</label>
+                            <el-date-picker
+                                v-model="form.produceDate"
+                                type="date"
+                                value-format="yyyy-MM-dd"
+                                placeholder="选择日期">
+                            </el-date-picker>
+                        </div>
+                        <el-form-item style="width: 312px;padding-right: 5px">
+                            <el-input v-model="form.expirationTime"><template slot="prepend">保质期</template><template slot="append">天</template></el-input>
+                        </el-form-item>
+                    </div>
+                        <div style="position:absolute;bottom:5px;left: 10px">
+                            <el-button type="danger" style="background-color: #F56C6C">删除</el-button>
+                        </div>
+                        <div style="position:absolute;bottom:5px;right: 10px">
+                            <el-button type="primary" @click="saveChange">保存</el-button>
+                        </div>
                 </el-form>
             </el-drawer>
         </div>
@@ -211,9 +260,11 @@
 </template>
 
 <script>
-import { commodityPage } from '@api/commodity'
+import { commodityPage, updateCommodity } from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
+import {getSupplierOptions} from '@api/supplier'
+import {getUnitOptions} from '@api/unit'
 import store from '../../../../store'
 export default {
   name: 'Second',
@@ -223,6 +274,8 @@ export default {
       index: 1,
       tableData: [],
       classificationOptions: [{id: 0, classification: '全部分类'}],
+      unitOptions: [],
+      supplierOptions: [],
       tableHeight: window.innerHeight - 140, // 表格动态高度
       total: '',
       drawer: false,
@@ -235,18 +288,19 @@ export default {
         claId: ''
       },
       form: {
+        id: '',
         name: '',
         supId: '',
         barcode: '',
         claId: '',
         price: '',
-        purchase_price: '',
+        purchasePrice: '',
         inventory: '',
         isDiscount: '',
         wholesalePrice: '',
         unitId: '',
         specification: '',
-        supplier: '',
+        supplierId: '',
         produceDate: '',
         expirationTime: ''
       },
@@ -326,8 +380,29 @@ export default {
     },
     editRow (rowIndex) {
       this.drawer = true
-      console.info(rowIndex)
-      console.info(this.tableData[rowIndex])
+      // console.info(this.tableData[rowIndex])
+      for (const key in this.form) {
+        // 如果 data 对象中存在与 form 对象相同的属性
+        if (this.tableData[rowIndex].hasOwnProperty(key)) {
+          // 将 data 对象的属性值赋给 form 对象的相应属性
+          this.form[key] = this.tableData[rowIndex][key]
+        }
+      }
+      console.info(this.form)
+    },
+    saveChange () {
+      console.info(this.form)
+      updateCommodity(this.form).then(res => {
+        if (res.data === true) {
+          this.$message({
+            message: '保存成功',
+            type: 'success'
+          })
+        } else {
+          this.$message.error('错了哦，这是一条错误消息')
+        }
+        this.drawer = false
+      })
     }
   },
   created () {
@@ -338,6 +413,12 @@ export default {
       return getClaOptions({supId: this.query.supId})
     }).then(res => {
       this.classificationOptions = this.classificationOptions.concat(res.data)
+      return getUnitOptions({supId: this.query.supId})
+    }).then(res => {
+      this.unitOptions = res.data
+      return getSupplierOptions({supId: this.query.supId})
+    }).then(res => {
+      this.supplierOptions = res.data
     })
   },
   mounted: function () {
@@ -355,7 +436,12 @@ export default {
 </script>
 
 <style scoped>
-.no-border {
-    border: none !important; /* 去掉边框线 */
+.flex-container{
+    display: flex;
+}
+.bottom-container{
+    position: absolute;
+    display: flex;
+    bottom: 5px;
 }
 </style>
