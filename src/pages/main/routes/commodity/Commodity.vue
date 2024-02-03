@@ -21,7 +21,7 @@
                         <el-button type="primary" icon="el-icon-search" @click="searchCommodities" size="mini">搜索</el-button>
                     </el-form-item>
                     <el-form-item style="margin: 0px;">
-                        <el-button type="primary" icon="el-icon-plus" @click="getEvents()" size="mini">新增</el-button>
+                        <el-button type="primary" icon="el-icon-plus" @click="addCommodity" size="mini">新增</el-button>
                     </el-form-item>
                     <el-form-item style="margin: 0px;">
                         <el-button type="primary" icon="el-icon-upload2" @click="getEvents()" size="mini">导入</el-button>
@@ -161,7 +161,7 @@
                     </div>
                     <div class="flex-container">
                         <div  style="width: 200px;">
-                            <el-form-item prop="purchase_price">
+                            <el-form-item prop="purchasePrice">
                                 <el-input v-model="form.purchasePrice">
                                     <template slot="prepend"><a style="color: red">* </a>进价</template>
                                 </el-input>
@@ -199,7 +199,7 @@
                             <template>
                                 <el-select v-model="form.claId" placeholder="选择分类" style="width: 220px">
                                     <el-option
-                                        v-for="item in classificationOptions"
+                                        v-for="item in classificationSelection"
                                         :key="item.id"
                                         :label="item.classification"
                                         :value="item.id">
@@ -238,7 +238,7 @@
                             <el-date-picker
                                 v-model="form.produceDate"
                                 type="date"
-                                value-format="yyyy-MM-dd"
+                                value-format="yyyy-MM-dd'T'HH:mm:ss"
                                 placeholder="选择日期">
                             </el-date-picker>
                         </div>
@@ -246,12 +246,15 @@
                             <el-input v-model="form.expirationTime"><template slot="prepend">保质期</template><template slot="append">天</template></el-input>
                         </el-form-item>
                     </div>
-                        <div style="position:absolute;bottom:5px;left: 10px">
-                            <el-button type="danger" style="background-color: #F56C6C">删除</el-button>
+                        <div v-show="!isVisible" style="position:absolute;bottom:5px;left: 10px;display: none">
+                            <el-button type="danger" style="background-color: #F56C6C" @click="deleteCommodity">删除</el-button>
                         </div>
-                        <div style="position:absolute;bottom:5px;right: 10px">
+                        <div v-show="!isVisible" style="position:absolute;bottom:5px;right: 10px;display: none">
                             <el-button type="primary" @click="saveChange">保存</el-button>
                         </div>
+                    <div v-show="isVisible" ref="addButton" style="position:absolute;bottom:5px;right: 10px;display: none">
+                        <el-button type="primary" @click="saveCommodity">新增</el-button>
+                    </div>
                 </el-form>
             </el-drawer>
         </div>
@@ -260,7 +263,7 @@
 </template>
 
 <script>
-import { commodityPage, updateCommodity } from '@api/commodity'
+import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getCommodityById } from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
 import {getSupplierOptions} from '@api/supplier'
@@ -269,11 +272,20 @@ import store from '../../../../store'
 export default {
   name: 'Second',
   data () {
+    var validateNumber = (rule, value, callback) => {
+      if (!/\d+/.test(value)) {
+        callback(new Error('请输入数字'))
+      } else {
+        callback()
+      }
+    }
     return {
       id: '',
+      isVisible: true,
       index: 1,
       tableData: [],
       classificationOptions: [{id: 0, classification: '全部分类'}],
+      classificationSelection: [],
       unitOptions: [],
       supplierOptions: [],
       tableHeight: window.innerHeight - 140, // 表格动态高度
@@ -285,7 +297,8 @@ export default {
         name: '',
         barcode: '',
         supId: '',
-        claId: ''
+        claId: '',
+        id: ''
       },
       form: {
         id: '',
@@ -312,13 +325,15 @@ export default {
           { required: true, message: '商品条码不能为空', trigger: 'blur' }
         ],
         price: [
-          { required: true, message: '售价不能为空', trigger: 'blur' }
+          { required: true, message: '售价不能为空', trigger: 'blur' },
+          {validator: validateNumber, message: '请输入数字', trigger: 'blur'}
         ],
-        purchase_price: [
-          { required: true, message: '进价不能为空', trigger: 'blur' }
+        purchasePrice: [
+          { required: true, message: '进价不能为空', trigger: 'blur' },
+          {validator: validateNumber, message: '请输入数字', trigger: 'blur'}
         ],
-        unit_id: [
-          { required: true, message: '单位不能为空', trigger: 'blur' }
+        wholesalePrice: [
+          {validator: validateNumber, message: '请输入数字', trigger: 'blur'}
         ]
       }
     }
@@ -380,6 +395,7 @@ export default {
     },
     editRow (rowIndex) {
       this.drawer = true
+      this.isVisible = false
       // console.info(this.tableData[rowIndex])
       for (const key in this.form) {
         // 如果 data 对象中存在与 form 对象相同的属性
@@ -388,20 +404,74 @@ export default {
           this.form[key] = this.tableData[rowIndex][key]
         }
       }
-      console.info(this.form)
+      // console.info(this.form)
     },
     saveChange () {
-      console.info(this.form)
+      // console.info(this.form)
       updateCommodity(this.form).then(res => {
         if (res.data === true) {
           this.$message({
             message: '保存成功',
             type: 'success'
           })
+          this.getCommodities()
         } else {
-          this.$message.error('错了哦，这是一条错误消息')
+          this.$message.error('保存失败')
         }
         this.drawer = false
+      })
+    },
+    deleteCommodity () {
+      deleteCommodityById(this.form).then(res => {
+        if (res.data) {
+          this.$message({
+            message: '删除成功',
+            type: 'success'
+          })
+          this.getCommodities()
+        } else {
+          this.$message.error('删除失败')
+        }
+      })
+      this.drawer = false
+    },
+    // 点击新增键弹出抽屉
+    addCommodity () {
+      this.drawer = true
+      this.isVisible = true
+      for (const key in this.form) {
+        this.form[key] = ''
+      }
+    },
+    // 保存新增商品到数据库
+    saveCommodity () {
+      if (this.form.wholesalePrice === '') {
+        this.form.wholesalePrice = this.form.price
+      }
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          // 数据校验通过，执行相应的操作，例如跳转到其他页面或提交表单等。
+          // console.log('数据校验通过')
+          addCommodity(this.form).then(res => {
+            if (res.data !== null) {
+              this.$message({
+                message: '新增商品成功',
+                type: 'success'
+              })
+              return getCommodityById({id: res.data})
+            } else {
+              this.$message.error('新增商品失败')
+            }
+          }).then(res => {
+            this.tableData = [res.data]
+            // console.info(this.tableData)
+            this.total = 1
+          })
+          this.drawer = false
+        } else {
+          // 数据校验失败，可以给按钮添加一个禁用状态或显示提示信息。
+          this.$refs.addButton.disabled = true // el-button 的 ref 名为 "addButton"
+        }
       })
     }
   },
@@ -412,6 +482,7 @@ export default {
       this.getCommodities()
       return getClaOptions({supId: this.query.supId})
     }).then(res => {
+      this.classificationSelection = res.data
       this.classificationOptions = this.classificationOptions.concat(res.data)
       return getUnitOptions({supId: this.query.supId})
     }).then(res => {
