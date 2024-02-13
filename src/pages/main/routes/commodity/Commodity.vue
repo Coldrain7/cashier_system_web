@@ -152,12 +152,21 @@
                             </el-input>
                         </el-form-item>
                     </div>
-                    <div  style="width: 600px;">
-                        <el-form-item prop="barcode">
-                            <el-input v-model="form.barcode">
-                                <template slot="prepend"><a style="color: red">* </a>商品条码</template>
-                            </el-input>
-                        </el-form-item>
+                    <div class="flex-container">
+                        <div style="width: 350px">
+                            <el-form-item prop="barcode">
+                                <el-input v-model="form.barcode">
+                                    <template slot="prepend"><a style="color: red">* </a>商品条码</template>
+                                    <el-button v-show="form.isMultibarcode" slot="append" class="edit-button" @click="editBarcodes" icon="el-icon-edit-outline"></el-button>
+                                </el-input>
+                            </el-form-item>
+                        </div>
+                        <div>
+                            <el-form-item label="是否一品多码" label-width="120px" style="padding-left: 20px;width: 150px">
+                                <el-switch v-model="form.isMultibarcode">
+                                </el-switch>
+                            </el-form-item>
+                        </div>
                     </div>
                     <div class="flex-container">
                         <div  style="width: 200px;">
@@ -256,6 +265,32 @@
                         <el-button type="primary" @click="saveCommodity">新增</el-button>
                     </div>
                 </el-form>
+                <el-dialog class="el-dialog__body" :title="form.name" :visible.sync="dialogTableVisible" append-to-body>
+                    <div style="padding-top: 0px">
+                        <el-input style="width: 600px; padding-left: 10px" v-model="form.barcode"><template slot="prepend">主条码</template></el-input>、
+                            <el-table ref="barcodeTable" :data="barcodes"
+                                      max-height="300"
+                                      :show-header="false">
+                                <el-table-column prop="barcode">
+                                    <template slot-scope="scope">
+                                        <el-input v-model="scope.row.barcode" @change="editBarcode(scope.$index)" placeholder="请输入条形码">
+                                            <template slot="append">
+                                                <el-button icon="el-icon-circle-close" @click="deleteBarcode(scope.$index)" class="delete-button"></el-button>
+                                            </template>
+                                        </el-input>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        <div class="flex-container">
+                            <div style="width: 40%;padding-left: 10px">
+                                <el-button class="add_btn" @click="addBarcode">添加</el-button>
+                            </div>
+                            <div style="width: 40%;position: absolute;right: 30px">
+                                <el-button class="save_btn" @click="saveBarcodes">保存</el-button>
+                            </div>
+                        </div>
+                    </div>
+                </el-dialog>
             </el-drawer>
         </div>
     </div>
@@ -263,7 +298,8 @@
 </template>
 
 <script>
-import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getCommodityById } from '@api/commodity'
+import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getCommodityById,
+  getBarcodesByComId, updateBarcodes, addBarcodes, deleteBarcodes } from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
 import {getSupplierOptions} from '@api/supplier'
@@ -282,8 +318,16 @@ export default {
     return {
       id: '',
       isVisible: true,
-      index: 1,
+      dialogTableVisible: false,
+      originBarcodesLength: 0,
       tableData: [],
+      barcodes: [],
+      changedBarcodes: [],
+      deleteIds: [],
+      newBarcode: {
+        comId: '',
+        barcode: ''
+      },
       classificationOptions: [{id: 0, classification: '全部分类'}],
       classificationSelection: [],
       unitOptions: [],
@@ -307,6 +351,7 @@ export default {
         barcode: '',
         claId: '',
         price: '',
+        isMultibarcode: '',
         purchasePrice: '',
         inventory: '',
         isDiscount: '',
@@ -339,7 +384,41 @@ export default {
     }
   },
   methods: {
+    async saveBarcodes () {
+      let res1 = true
+      let res2 = true
+      let res3 = true
+      if (this.changedBarcodes.length > 0) {
+        let param = JSON.stringify(this.changedBarcodes)
+        await updateBarcodes(param).then(res => {
+          res1 = res.data
+        })
+      }
+      if (this.barcodes.length > this.originBarcodesLength) {
+        // console.info(this.barcodes.length)
+        // console.info(this.originBarcodesLength)
+        let param = JSON.stringify(this.barcodes.slice(this.originBarcodesLength, this.barcodes.length))
+        await addBarcodes(param).then(res => {
+          res2 = res.data
+        })
+      }
+      if (this.deleteIds.length > 0) {
+        let param = JSON.stringify(this.deleteIds)
+        await deleteBarcodes(param).then(res => {
+          res3 = res.data
+        })
+      }
+      if (res1 && res2 && res3) {
+        this.$message({
+          message: '保存成功',
+          type: 'success'
+        })
+      } else {
+        this.$message.error('保存失败')
+      }
+    },
     getCommodities () {
+      console.info(this.query)
       commodityPage(this.query).then(res => {
         this.tableData = res.data.records
         this.total = res.data.total
@@ -391,6 +470,8 @@ export default {
       }).then(res => {
         this.tableData = this.tableData.concat(res.data.records)
         this.total += res.data.total
+        this.query.name = this.query.barcode
+        this.query.barcode = ''
       })
     },
     editRow (rowIndex) {
@@ -404,6 +485,16 @@ export default {
           this.form[key] = this.tableData[rowIndex][key]
         }
       }
+      // getBarcodesByComId({id: this.form.id}).then(res => {
+      //   // console.info(res.data.length)
+      //   if (res.data.length <= 0) {
+      //     this.isMultiBarcode = false
+      //   } else {
+      //     this.isMultiBarcode = true
+      //     this.barcodes = res.data
+      //     // console.info(this.barcodes.length)
+      //   }
+      // })
       // console.info(this.form)
     },
     saveChange () {
@@ -414,7 +505,7 @@ export default {
             message: '保存成功',
             type: 'success'
           })
-          this.getCommodities()
+          this.searchCommodities()
         } else {
           this.$message.error('保存失败')
         }
@@ -442,6 +533,7 @@ export default {
       for (const key in this.form) {
         this.form[key] = ''
       }
+      this.form.isMultibarcode = false
     },
     // 保存新增商品到数据库
     saveCommodity () {
@@ -452,6 +544,7 @@ export default {
         if (valid) {
           // 数据校验通过，执行相应的操作，例如跳转到其他页面或提交表单等。
           // console.log('数据校验通过')
+          this.form.supId = this.query.supId
           addCommodity(this.form).then(res => {
             if (res.data !== null) {
               this.$message({
@@ -473,6 +566,54 @@ export default {
           this.$refs.addButton.disabled = true // el-button 的 ref 名为 "addButton"
         }
       })
+    },
+    // 点击编辑一品多码按钮
+    editBarcodes () {
+      this.dialogTableVisible = true
+      this.changedBarcodes = []
+      console.info(this.barcodes.length)
+      getBarcodesByComId({id: this.form.id}).then(res => {
+        // console.info(res.data)
+        this.barcodes = res.data
+        this.originBarcodesLength = this.barcodes.length
+      })
+    },
+    // 输入框编辑条形码
+    editBarcode (rowIndex) {
+      if (this.originBarcodesLength > rowIndex) {
+        this.changedBarcodes.push(
+          {
+            id: this.barcodes[rowIndex].id,
+            barcode: this.barcodes[rowIndex].barcode
+          }
+        )
+      }
+    },
+    addBarcode () {
+      this.barcodes.push(
+        {id: '',
+          comId: this.form.id,
+          barcode: '',
+          isDeleted: false,
+          createTime: '',
+          updateTime: ''})
+      this.$nextTick(() => {
+        // 使用$refs获取el-table的DOM元素
+        const tableBodyWrapper = this.$refs.barcodeTable.$el.querySelector('.el-table__body-wrapper')
+        // 确保tableBodyWrapper存在
+        if (tableBodyWrapper) {
+          // 滚动到底部
+          tableBodyWrapper.scrollTop = tableBodyWrapper.scrollHeight
+        }
+      })
+    },
+    deleteBarcode (rowIndex) {
+      // 行号小于数组长度时，将条形码id加入待删除数组
+      if (rowIndex < this.barcodes.length) {
+        this.deleteIds.push(this.barcodes[rowIndex].id)
+        this.originBarcodesLength--
+      }
+      this.barcodes.splice(rowIndex, 1)
     }
   },
   created () {
@@ -514,5 +655,36 @@ export default {
     position: absolute;
     display: flex;
     bottom: 5px;
+}
+.add_btn {
+    text-align: center;
+    padding: 12px;
+    width: 100%;
+    margin-top: 0px;
+    background-color: #67C23A;
+    color: #fff;
+}
+.save_btn{
+    text-align: center;
+    padding: 12px;
+    width: 100%;
+    margin-top: 0px;
+    background-color: #409EFF;
+    color: #fff;
+}
+.el-dialog__body {
+    padding: 0px 20px;
+    color: #606266;
+    font-size: 14px;
+    word-break: break-all;
+}
+
+.delete-button:hover{
+    background-color: #F56C6C;
+    color: white;
+}
+.edit-button:hover{
+    background-color: #67C23A;
+    color: white;
 }
 </style>

@@ -4,3 +4,7 @@ export const updateCommodity = commodity => http.GET('./api/commodity/updateComm
 export const deleteCommodityById = commodity => http.DELETE(`./api/commodity/deleteCommodity/${commodity.id}`, commodity)
 export const addCommodity = commodity => http.GET('./api/commodity/createCommodity', commodity)
 export const getCommodityById = query => http.GET(`./api/commodity/getCommodity/${query.id}`, query)
+export const getBarcodesByComId = id => http.GET('./api/multibarcode/getBarcodes', id)
+export const updateBarcodes = barcodes => http.POSTJson('./api/multibarcode/updateBarcodes', barcodes)
+export const addBarcodes = barcodes => http.POSTJson('./api/multibarcode/addBarcodes', barcodes)
+export const deleteBarcodes = barcodes => http.POSTJson('./api/multibarcode/deleteBarcodes', barcodes)

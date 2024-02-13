@@ -67,6 +67,18 @@ export default {
       })
     }).then(checkStatus).then(res => checkCode(res, errMsg))
   },
+  POSTJson (url, data, errMsg) {
+    const CancelToken = axios.CancelToken
+    return axios.post(url, data, {
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8' // 设置Content-Type为application/json
+      },
+      cancelToken: new CancelToken(function executor (c) {
+        Vue.$httpRequestList.push(c)
+      })
+    }).then(checkStatus).then(res => checkCode(res, errMsg))
+  },
   GET (url, params, errMsg) {
     const CancelToken = axios.CancelToken
     return axios.get(url, {
@@ -89,6 +101,7 @@ export default {
       })
     }).then(checkStatus).then(res => checkCode(res, errMsg))
   },
+
   PUT (url, data, errMsg) {
     const CancelToken = axios.CancelToken
     return axios.put(url, data, {
