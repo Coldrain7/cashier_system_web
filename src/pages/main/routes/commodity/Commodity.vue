@@ -18,7 +18,7 @@
                         </template>
                     </el-form-item>
                     <el-form-item style="margin: 0px;">
-                        <el-button type="primary" icon="el-icon-search" @click="searchCommodities" size="mini">搜索</el-button>
+                        <el-button type="primary" icon="el-icon-search" @click="getCommodities" size="mini">搜索</el-button>
                     </el-form-item>
                     <el-form-item style="margin: 0px;">
                         <el-button type="primary" icon="el-icon-plus" @click="addCommodity" size="mini">新增</el-button>
@@ -37,6 +37,7 @@
                 :row-style="{height: 40 +'px'}"
                 :cell-style="{padding:0+'px'}"
                 :height="tableHeight"
+                @sort-change="handleSortChange"
                 border
                 style="width: 100%">
                 <el-table-column
@@ -299,7 +300,7 @@
 
 <script>
 import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getCommodityById,
-  getBarcodesByComId, updateBarcodes, addBarcodes, deleteBarcodes } from '@api/commodity'
+  getBarcodesByComId, updateBarcodes, addBarcodes, deleteBarcodes, commodityPageInOrder, searchCommodities } from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
 import {getSupplierOptions} from '@api/supplier'
@@ -342,7 +343,9 @@ export default {
         barcode: '',
         supId: '',
         claId: '',
-        id: ''
+        id: '',
+        order: null,
+        prop: ''
       },
       form: {
         id: '',
@@ -384,6 +387,11 @@ export default {
     }
   },
   methods: {
+    handleSortChange ({ prop, order }) {
+      this.query.prop = prop
+      this.query.order = order
+      this.getCommodities()
+    },
     async saveBarcodes () {
       let res1 = true
       let res2 = true
@@ -418,12 +426,29 @@ export default {
       }
     },
     getCommodities () {
-      console.info(this.query)
-      commodityPage(this.query).then(res => {
-        this.tableData = res.data.records
-        this.total = res.data.total
-        // console.info(res.data)
-      })
+      this.query.barcode = this.query.name
+      // 名称搜索栏不为空时,搜索商品
+      if (this.query.name !== '') {
+        searchCommodities(this.query).then(res => {
+          this.tableData = res.data.records
+          this.total = res.data.total
+        })
+      } else {
+        // 搜索栏为空时，直接查询
+        if (this.query.order === null) {
+          // console.info(this.query)
+          commodityPage(this.query).then(res => {
+            this.tableData = res.data.records
+            this.total = res.data.total
+            // console.info(res.data)
+          })
+        } else {
+          commodityPageInOrder(this.query).then(res => {
+            this.tableData = res.data.records
+            this.total = res.data.total
+          })
+        }
+      }
     },
     formatTime (row) {
       const date = new Date(row.createTime)
@@ -459,21 +484,6 @@ export default {
     indexMethod (index) {
       return (this.query.pageNo - 1) * this.query.pageSize + index + 1
     },
-    searchCommodities () {
-      commodityPage(this.query).then(res => {
-        this.tableData = res.data.records
-        this.total = res.data.total
-        // console.info(res.data)
-        this.query.barcode = this.query.name
-        this.query.name = ''
-        return commodityPage(this.query)
-      }).then(res => {
-        this.tableData = this.tableData.concat(res.data.records)
-        this.total += res.data.total
-        this.query.name = this.query.barcode
-        this.query.barcode = ''
-      })
-    },
     editRow (rowIndex) {
       this.drawer = true
       this.isVisible = false
@@ -505,7 +515,7 @@ export default {
             message: '保存成功',
             type: 'success'
           })
-          this.searchCommodities()
+          this.getCommodities()
         } else {
           this.$message.error('保存失败')
         }
@@ -571,7 +581,7 @@ export default {
     editBarcodes () {
       this.dialogTableVisible = true
       this.changedBarcodes = []
-      console.info(this.barcodes.length)
+      // console.info(this.barcodes.length)
       getBarcodesByComId({id: this.form.id}).then(res => {
         // console.info(res.data)
         this.barcodes = res.data

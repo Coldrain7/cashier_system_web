@@ -1,5 +1,6 @@
 import http from '@http/http'
 export const commodityPage = query => http.GET('./api/commodity/commodityPage', query)
+export const commodityPageInOrder = query => http.GET('./api/commodity/commodityPageInOrder', query)
 export const updateCommodity = commodity => http.GET('./api/commodity/updateCommodity', commodity)
 export const deleteCommodityById = commodity => http.DELETE(`./api/commodity/deleteCommodity/${commodity.id}`, commodity)
 export const addCommodity = commodity => http.GET('./api/commodity/createCommodity', commodity)
@@ -8,3 +9,4 @@ export const getBarcodesByComId = id => http.GET('./api/multibarcode/getBarcodes
 export const updateBarcodes = barcodes => http.POSTJson('./api/multibarcode/updateBarcodes', barcodes)
 export const addBarcodes = barcodes => http.POSTJson('./api/multibarcode/addBarcodes', barcodes)
 export const deleteBarcodes = barcodes => http.POSTJson('./api/multibarcode/deleteBarcodes', barcodes)
+export const searchCommodities = query => http.GET('./api/commodity/searchCommodities', query)
