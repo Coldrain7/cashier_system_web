@@ -2,6 +2,9 @@
     <div>
         <div style="background-color: white">
                 <el-form :inline="true" style="padding: 0px;text-align: right;">
+                    <el-form-item style="margin: 0px;text-align: left;">
+                        <el-button type="primary" size="mini">高级搜索</el-button>
+                    </el-form-item>
                     <el-form-item style="margin: 0px;padding-left: 10px">
                         <el-input size="mini" v-model="query.name" placeholder="商品名称/条码"></el-input>
                     </el-form-item>
@@ -115,7 +118,7 @@
                     prop="expirationTime"
                     label="保质期"
                     :formatter="formatExpiration"
-                    sortable
+                    sortableF
                     width="180">
                 </el-table-column>
                 <el-table-column
@@ -226,6 +229,7 @@
                                         :label="item.unit"
                                         :value="item.id">
                                     </el-option>
+                                    <el-button type="primary" size="small" class="select-button" @click="editUnitOption">编辑单位</el-button>
                                 </el-select>
                             </template>
                         </el-form-item>
@@ -294,6 +298,31 @@
                 </el-dialog>
             </el-drawer>
         </div>
+        <div>
+            <el-dialog width="28%"
+                       title="编辑单位"
+                       :visible.sync="unitEditVisible">
+                <el-input style="width: 330px" v-model.trim="newUnit.unit">
+                    <template slot="prepend">新建单位</template>
+                    <el-button slot="append" class="edit-button" @click="addUnit" icon="el-icon-plus"></el-button>
+                </el-input>
+                    <div v-for="(row, rowIndex) in formattedUnits" :key="rowIndex" class="button-row">
+                        <el-popover
+                            placement="top"
+                            width="160"
+                            v-for="(item, index) in row"
+                            :key="index"
+                            v-model="popoverVisible[rowIndex * 6 + index]"
+                        >
+                            <div style="text-align: center; margin: 0;">
+                                <el-button size="mini" @click="closePopover(rowIndex, index)">取消</el-button>
+                                <el-button type="primary" size="mini" @click="deleteUnit(item)">删除</el-button>
+                            </div>
+                            <el-button slot="reference">{{item.unit}}</el-button>
+                        </el-popover>
+                    </div>
+            </el-dialog>
+        </div>
     </div>
 
 </template>
@@ -304,7 +333,7 @@ import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getC
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
 import {getSupplierOptions} from '@api/supplier'
-import {getUnitOptions} from '@api/unit'
+import {getUnitOptions, addUnit, deleteUnitById} from '@api/unit'
 import store from '../../../../store'
 export default {
   name: 'Second',
@@ -320,6 +349,9 @@ export default {
       id: '',
       isVisible: true,
       dialogTableVisible: false,
+      unitEditVisible: false,
+      popoverVisible: [],
+      currentPopoverCell: null,
       originBarcodesLength: 0,
       tableData: [],
       barcodes: [],
@@ -329,9 +361,14 @@ export default {
         comId: '',
         barcode: ''
       },
+      newUnit: {
+        supId: '',
+        unit: ''
+      },
       classificationOptions: [{id: 0, classification: '全部分类'}],
       classificationSelection: [],
       unitOptions: [],
+      formattedUnits: [],
       supplierOptions: [],
       tableHeight: window.innerHeight - 140, // 表格动态高度
       total: '',
@@ -387,6 +424,57 @@ export default {
     }
   },
   methods: {
+    deleteUnit (item) {
+      deleteUnitById(item).then(res => {
+        if (res.data) {
+          this.$message({
+            message: '删除成功',
+            type: 'success'
+          })
+          getUnitOptions({supId: this.query.supId}).then(res => {
+            this.unitOptions = res.data
+            this.formatUnit()
+          })
+        } else {
+          this.$message.error('删除失败')
+        }
+      })
+    },
+    addUnit () {
+      addUnit(this.newUnit).then(res => {
+        if (res.data) {
+          this.$message({
+            message: '创建成功',
+            type: 'success'
+          })
+          getUnitOptions({supId: this.query.supId}).then(res => {
+            this.unitOptions = res.data
+            this.formatUnit()
+          })
+        } else {
+          this.$message.error('创建失败，单位已存在')
+        }
+      })
+    },
+    closePopover (rowIndex, index) {
+      this.$set(this.popoverVisible, rowIndex * 6 + index, false)
+    },
+    formatUnit () {
+      this.formattedUnits = []
+      const itemsPerRow = 6 // 每行显示的元素数量
+      const numRows = Math.ceil(this.unitOptions.length / itemsPerRow) // 计算需要多少行
+      for (let i = 0; i < numRows; i++) {
+        const start = i * itemsPerRow
+        const end = start + itemsPerRow
+        this.formattedUnits.push(this.unitOptions.slice(start, end))
+      }
+      for (let i = 0; i < this.unitOptions.length; i++) {
+        this.popoverVisible.push(false)
+      }
+    },
+    editUnitOption () {
+      this.unitEditVisible = true
+    },
     handleSortChange ({ prop, order }) {
       this.query.prop = prop
       this.query.order = order
@@ -630,6 +718,7 @@ export default {
     this.id = store.getters['user/getUserId']
     getSupIdById({id: this.id}).then(res => {
       this.query.supId = res.data
+      this.newUnit.supId = this.query.supId
       this.getCommodities()
       return getClaOptions({supId: this.query.supId})
     }).then(res => {
@@ -638,6 +727,7 @@ export default {
       return getUnitOptions({supId: this.query.supId})
     }).then(res => {
       this.unitOptions = res.data
+      this.formatUnit()
       return getSupplierOptions({supId: this.query.supId})
     }).then(res => {
       this.supplierOptions = res.data
@@ -692,6 +782,9 @@ export default {
 .delete-button:hover{
     background-color: #F56C6C;
     color: white;
+}
+.select-button{
+    width: 100%;
 }
 .edit-button:hover{
     background-color: #67C23A;
