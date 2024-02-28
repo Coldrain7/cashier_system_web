@@ -10,3 +10,4 @@ export const updateBarcodes = barcodes => http.POSTJson('./api/multibarcode/upda
 export const addBarcodes = barcodes => http.POSTJson('./api/multibarcode/addBarcodes', barcodes)
 export const deleteBarcodes = barcodes => http.POSTJson('./api/multibarcode/deleteBarcodes', barcodes)
 export const searchCommodities = query => http.GET('./api/commodity/searchCommodities', query)
+export const advanceSearchPage = query => http.POST('./api/commodity/advanceSearch', query)

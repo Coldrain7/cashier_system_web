@@ -2,9 +2,6 @@
     <div>
         <div style="background-color: white">
                 <el-form :inline="true" style="padding: 0px;text-align: right;">
-                    <el-form-item style="margin: 0px;text-align: left;">
-                        <el-button type="primary" size="mini">高级搜索</el-button>
-                    </el-form-item>
                     <el-form-item style="margin: 0px;padding-left: 10px">
                         <el-input size="mini" v-model="query.name" placeholder="商品名称/条码"></el-input>
                     </el-form-item>
@@ -22,6 +19,9 @@
                     </el-form-item>
                     <el-form-item style="margin: 0px;">
                         <el-button type="primary" icon="el-icon-search" @click="getCommodities" size="mini">搜索</el-button>
+                    </el-form-item>
+                    <el-form-item style="margin: 0px;text-align: left;">
+                        <el-button type="primary" size="mini" @click="advanceVisible = true">高级搜索</el-button>
                     </el-form-item>
                     <el-form-item style="margin: 0px;">
                         <el-button type="primary" icon="el-icon-plus" @click="addCommodity" size="mini">新增</el-button>
@@ -146,7 +146,6 @@
                 layout="total, sizes, prev, pager, next, jumper"
                 :total="total">
             </el-pagination>
-
             <el-drawer :visible.sync="drawer" size="610px" :with-header="false">
                 <el-form :model="form" :rules="rules" ref="form" label-width="0px" label-position="left" style="padding-top: 50px; padding-left: 5px">
                     <div  style="width: 600px;">
@@ -297,6 +296,156 @@
                     </div>
                 </el-dialog>
             </el-drawer>
+            <el-drawer :visible.sync="advanceVisible" size="610px" :with-header="false">
+                <el-form :model="advanceQuery" label-width="0px" label-position="left" style="padding-top: 50px; padding-left: 5px">
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <a>分类：{{ advanceQuery.claIds.length?  `已选${advanceQuery.claIds.length}种分类` : '不限分类' }}</a>
+                        </el-form-item>
+                        <el-form-item style="padding-left: 10px">
+                            <el-button type="text" size="medium" @click="advanceClaVisible=true">选择分类</el-button>
+                        </el-form-item>
+                    </div>
+                    <el-divider></el-divider>
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <a>供应商：{{ advanceQuery.supplierIds.length ?  `已选${advanceQuery.supplierIds.length}个供应商` : '不限供应商' }}</a>
+                        </el-form-item>
+                        <el-form-item style="padding-left: 10px">
+                            <el-button type="text" size="medium" @click="advanceSupplierVisible=true">选择供应商</el-button>
+                        </el-form-item>
+                    </div>
+                    <el-divider></el-divider>
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <p>录入时间：
+                                <el-date-picker
+                                v-model="advanceQuery.timeFrom"
+                                value-format="yyyy-MM-dd HH:mm:ss"
+                                type="date"
+                                placeholder="选择开始日期">
+                                </el-date-picker>
+                                <el-date-picker
+                                    v-model="advanceQuery.timeTo"
+                                    value-format="yyyy-MM-dd HH:mm:ss"
+                                    type="date"
+                                    placeholder="选择结束日期">
+                                </el-date-picker></p>
+                        </el-form-item>
+                    </div>
+                    <el-divider></el-divider>
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <p>价格区间：</p>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-input style="padding-top: 15px" v-model="advanceQuery.priceFrom"><template slot="append">元</template></el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-input style="padding-top: 15px" v-model="advanceQuery.priceTo"><template slot="append">元</template></el-input>
+                        </el-form-item>
+                    </div>
+                    <el-divider></el-divider>
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <p>库存区间：</p>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-input style="padding-top: 15px" v-model="advanceQuery.inventoryFrom"><template slot="append">元</template></el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-input style="padding-top: 15px" v-model="advanceQuery.inventoryTo"><template slot="append">元</template></el-input>
+                        </el-form-item>
+                    </div>
+                    <el-divider></el-divider>
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <p>关键字：</p>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-input style="padding-top: 15px" v-model="advanceQuery.name" placeholder="商品名称/条码"></el-input>
+                        </el-form-item>
+                    </div>
+                    <el-divider></el-divider>
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <p>规格：</p>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-input style="padding-top: 15px" v-model="advanceQuery.specification" placeholder="商品名称/条码"></el-input>
+                        </el-form-item>
+                    </div>
+                    <el-divider></el-divider>
+                    <div  class="flex-container">
+                        <el-form-item>
+                            <p>会员折扣：
+                                <el-switch
+                                    active-text="是"
+                                    inactive-text="否"
+                                    v-model="advanceQuery.isDiscount">
+                                </el-switch>
+                            </p>
+                        </el-form-item>
+                        <el-form-item style="padding-left: 50px">
+                            <p>一品多码：
+                                <el-switch
+                                    active-text="是"
+                                    inactive-text="否"
+                                    v-model="advanceQuery.isMultibarcode">
+                                </el-switch>
+                            </p>
+                        </el-form-item>
+                    </div>
+                </el-form>
+                <div class="bottom-container">
+                    <el-button icon="el-icon-delete" @click="clearAdvanceQuery">清空条件</el-button>
+                    <el-button type="primary" @click="advanceSearch">搜索</el-button>
+                </div>
+                <el-dialog title="选择分类" :visible.sync="advanceClaVisible" append-to-body>
+                    <el-input v-model="searchPattern" placeholder="输入关键字搜索" prefix-icon="el-icon-search">
+                    </el-input>
+                    <el-table
+                        ref="multipleClassification"
+                        :data="filteredClassifications"
+                        :row-style="{height: 40 +'px'}"
+                        height="400px"
+                        border
+                        @selection-change="claSelectionChange"
+                        style="width: 100%">
+                        <el-table-column
+                            type="selection"
+                            width="50">
+                        </el-table-column>
+                        <el-table-column
+                            prop="classification"
+                            label="分类名称"
+                            width="590">
+                        </el-table-column>
+                    </el-table>
+                </el-dialog>
+                <el-dialog title="选择供应商" :visible.sync="advanceSupplierVisible" append-to-body>
+                    <el-input v-model="searchPattern" placeholder="输入关键字搜索" prefix-icon="el-icon-search">
+                    </el-input>
+                    <el-table
+                        ref="multipleSupplier"
+                        :data="filteredSuppliers"
+                        :row-style="{height: 40 +'px'}"
+                        height="400px"
+                        border
+                        @selection-change="supplierSelectionChange"
+                        style="width: 100%">
+                        <el-table-column
+                            type="selection"
+                            width="50">
+                        </el-table-column>
+                        <el-table-column
+                            prop="name"
+                            label="供应商 "
+                            width="590">
+                        </el-table-column>
+                    </el-table>
+                </el-dialog>
+            </el-drawer>
         </div>
         <div>
             <el-dialog width="28%"
@@ -329,7 +478,8 @@
 
 <script>
 import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getCommodityById,
-  getBarcodesByComId, updateBarcodes, addBarcodes, deleteBarcodes, commodityPageInOrder, searchCommodities } from '@api/commodity'
+  getBarcodesByComId, updateBarcodes, addBarcodes, deleteBarcodes, commodityPageInOrder,
+  searchCommodities, advanceSearchPage } from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
 import {getSupplierOptions} from '@api/supplier'
@@ -347,9 +497,14 @@ export default {
     }
     return {
       id: '',
+      isAdvanceSearch: false,
+      searchPattern: '',
       isVisible: true,
       dialogTableVisible: false,
       unitEditVisible: false,
+      advanceVisible: false,
+      advanceSupplierVisible: false,
+      advanceClaVisible: false,
       popoverVisible: [],
       currentPopoverCell: null,
       originBarcodesLength: 0,
@@ -383,6 +538,25 @@ export default {
         id: '',
         order: null,
         prop: ''
+      },
+      advanceQuery: {
+        claIds: [],
+        supplierIds: [],
+        isDiscount: true,
+        timeFrom: '',
+        timeTo: '',
+        priceFrom: '',
+        priceTo: '',
+        inventoryFrom: '',
+        inventoryTo: '',
+        name: '',
+        specification: '',
+        isMultibarcode: false,
+        order: null,
+        prop: '',
+        pageNo: 1,
+        pageSize: 20,
+        supId: ''
       },
       form: {
         id: '',
@@ -423,7 +597,63 @@ export default {
       }
     }
   },
+  computed: {
+    filteredClassifications () {
+      // 使用map方法遍历items数组，并使用likeSearch方法过滤出匹配的项
+      return this.classificationSelection.filter(item => this.likeSearch(item.classification, this.searchPattern))
+    },
+    filteredSuppliers () {
+      return this.supplierOptions.filter(item => this.likeSearch(item.name, this.searchPattern))
+    }
+  },
   methods: {
+    // columnStyle ({ row, column, rowIndex, columnIndex }) {
+    //   if (columnIndex === 0) {
+    //     return 'background: #F6F6F7'
+    //   }
+    // },
+    clearAdvanceQuery () {
+      this.advanceQuery.claIds = []
+      this.advanceQuery.supplierIds = []
+      this.advanceQuery.isDiscount = true
+      this.advanceQuery.timeFrom = ''
+      this.advanceQuery.timeTo = ''
+      this.advanceQuery.priceFrom = ''
+      this.advanceQuery.priceTo = ''
+      this.advanceQuery.inventoryFrom = ''
+      this.advanceQuery.inventoryTo = ''
+      this.advanceQuery.name = ''
+      this.advanceQuery.specification = ''
+      this.advanceQuery.isMultibarcode = false
+      this.$refs.multipleClassification.clearSelection()
+      this.$refs.multipleSupplier.clearSelection()
+    },
+    advanceSearch () {
+      this.isAdvanceSearch = true
+      this.advanceQuery.pageNo = this.query.pageNo
+      this.advanceQuery.pageSize = this.query.pageSize
+      advanceSearchPage(this.advanceQuery).then(res => {
+        this.tableData = res.data.records
+        this.total = res.data.total
+      })
+    },
+    likeSearch (text, searchPattern) {
+      const pattern = '.*' + searchPattern + '.*'
+      const regex = new RegExp(pattern, 'i')
+      return regex.test(text)
+    },
+    claSelectionChange (val) {
+      this.advanceQuery.claIds = []
+      for (let item of val) {
+        this.advanceQuery.claIds.push(item.id)
+      }
+    },
+    supplierSelectionChange (val) {
+      this.advanceQuery.supplierIds = []
+      for (let item of val) {
+        this.advanceQuery.supplierIds.push(item.id)
+      }
+    },
     deleteUnit (item) {
       deleteUnitById(item).then(res => {
         if (res.data) {
@@ -478,7 +708,13 @@ export default {
     handleSortChange ({ prop, order }) {
       this.query.prop = prop
       this.query.order = order
-      this.getCommodities()
+      this.advanceQuery.prop = prop
+      this.advanceQuery.order = order
+      if (this.isAdvanceSearch) {
+        this.advanceSearch()
+      } else {
+        this.getCommodities()
+      }
     },
     async saveBarcodes () {
       let res1 = true
@@ -514,6 +750,7 @@ export default {
       }
     },
     getCommodities () {
+      this.isAdvanceSearch = false
       this.query.barcode = this.query.name
       // 名称搜索栏不为空时,搜索商品
       if (this.query.name !== '') {
@@ -563,11 +800,21 @@ export default {
     },
     handleSizeChange (value) {
       this.query.pageSize = value
-      this.getCommodities()
+      this.advanceQuery.pageSize = value
+      if (this.isAdvanceSearch) {
+        this.advanceSearch()
+      } else {
+        this.getCommodities()
+      }
     },
     handleCurrentChange (value) {
       this.query.pageNo = value
-      this.getCommodities()
+      this.advanceQuery.pageNo = value
+      if (this.isAdvanceSearch) {
+        this.advanceSearch()
+      } else {
+        this.getCommodities()
+      }
     },
     indexMethod (index) {
       return (this.query.pageNo - 1) * this.query.pageSize + index + 1
@@ -719,6 +966,7 @@ export default {
     getSupIdById({id: this.id}).then(res => {
       this.query.supId = res.data
       this.newUnit.supId = this.query.supId
+      this.advanceQuery.supId = this.query.supId
       this.getCommodities()
       return getClaOptions({supId: this.query.supId})
     }).then(res => {
@@ -752,9 +1000,10 @@ export default {
     display: flex;
 }
 .bottom-container{
-    position: absolute;
     display: flex;
-    bottom: 5px;
+    justify-content: space-between;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 .add_btn {
     text-align: center;
@@ -789,5 +1038,9 @@ export default {
 .edit-button:hover{
     background-color: #67C23A;
     color: white;
+}
+.el-divider--horizontal{
+    margin-top: -20px;
+    margin-bottom: 0px;
 }
 </style>
