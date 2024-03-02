@@ -30,7 +30,7 @@
                         <el-button type="primary" icon="el-icon-upload2" @click="getEvents()" size="mini">导入</el-button>
                     </el-form-item>
                     <el-form-item style="margin: 0px;padding-right: 20px">
-                        <el-button type="primary" icon="el-icon-download" @click="getEvents()" size="mini">导出</el-button>
+                        <el-button type="primary" icon="el-icon-download" @click="exportCommodities" size="mini">导出</el-button>
                     </el-form-item>
                 </el-form>
         </div>
@@ -479,7 +479,7 @@
 <script>
 import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getCommodityById,
   getBarcodesByComId, updateBarcodes, addBarcodes, deleteBarcodes, commodityPageInOrder,
-  searchCommodities, advanceSearchPage } from '@api/commodity'
+  searchCommodities, advanceSearchPage, exportCommodities, advanceExport } from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
 import {getSupplierOptions} from '@api/supplier'
@@ -612,6 +612,29 @@ export default {
     //     return 'background: #F6F6F7'
     //   }
     // },
+    exportCommodities () {
+      if (this.isAdvanceSearch) {
+        advanceExport(this.advanceQuery).then(res => {
+          let blob = new Blob([res], {type: 'application/vnd.ms-excel'})
+          let url = window.URL.createObjectURL(blob)
+          let a = document.createElement('a')
+          a.href = url
+          a.download = '商品资料.xls'
+          a.click()
+          window.URL.revokeObjectURL(url)
+        })
+      } else {
+        exportCommodities(this.query).then(res => {
+          let blob = new Blob([res], {type: 'application/vnd.ms-excel'})
+          let url = window.URL.createObjectURL(blob)
+          let a = document.createElement('a')
+          a.href = url
+          a.download = '商品资料.xls'
+          a.click()
+          window.URL.revokeObjectURL(url)
+        })
+      }
+    },
     clearAdvanceQuery () {
       this.advanceQuery.claIds = []
       this.advanceQuery.supplierIds = []
@@ -878,6 +901,7 @@ export default {
       for (const key in this.form) {
         this.form[key] = ''
       }
+      this.form.isDiscount = true
       this.form.isMultibarcode = false
     },
     // 保存新增商品到数据库

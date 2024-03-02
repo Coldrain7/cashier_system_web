@@ -11,3 +11,5 @@ export const addBarcodes = barcodes => http.POSTJson('./api/multibarcode/addBarc
 export const deleteBarcodes = barcodes => http.POSTJson('./api/multibarcode/deleteBarcodes', barcodes)
 export const searchCommodities = query => http.GET('./api/commodity/searchCommodities', query)
 export const advanceSearchPage = query => http.POST('./api/commodity/advanceSearch', query)
+export const exportCommodities = commodity => http.EXPORT('./api/commodity/exportCommodities', commodity)
+export const advanceExport = map => http.EXPORT('./api/commodity/advanceExport', map)
