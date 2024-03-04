@@ -27,7 +27,7 @@
                         <el-button type="primary" icon="el-icon-plus" @click="addCommodity" size="mini">新增</el-button>
                     </el-form-item>
                     <el-form-item style="margin: 0px;">
-                        <el-button type="primary" icon="el-icon-upload2" @click="getEvents()" size="mini">导入</el-button>
+                        <el-button type="primary" icon="el-icon-upload2" @click="isImport = true" size="mini">导入</el-button>
                     </el-form-item>
                     <el-form-item style="margin: 0px;padding-right: 20px">
                         <el-button type="primary" icon="el-icon-download" @click="exportCommodities" size="mini">导出</el-button>
@@ -146,6 +146,22 @@
                 layout="total, sizes, prev, pager, next, jumper"
                 :total="total">
             </el-pagination>
+            <el-dialog width="30%" title="导入商品" :visible.sync="isImport">
+                <el-upload
+                    class="upload-demo"
+                    drag
+                    action="./api/commodity/importCommodities"
+                    accept=".xls, .xlsx"
+                    :limit="1"
+                    :data="{supId: query.supId}"
+                    :on-exceed="importExceed"
+                    :on-success="importSuccess">
+                    <i class="el-icon-upload"></i>
+                    <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                    <div class="el-upload__tip" slot="tip">只能上传xls/xlsx文件</div>
+                </el-upload>
+                <el-button type="text" @click="exportTemplate">下载模板</el-button>
+            </el-dialog>
             <el-drawer :visible.sync="drawer" size="610px" :with-header="false">
                 <el-form :model="form" :rules="rules" ref="form" label-width="0px" label-position="left" style="padding-top: 50px; padding-left: 5px">
                     <div  style="width: 600px;">
@@ -479,7 +495,7 @@
 <script>
 import { commodityPage, updateCommodity, deleteCommodityById, addCommodity, getCommodityById,
   getBarcodesByComId, updateBarcodes, addBarcodes, deleteBarcodes, commodityPageInOrder,
-  searchCommodities, advanceSearchPage, exportCommodities, advanceExport } from '@api/commodity'
+  searchCommodities, advanceSearchPage, exportCommodities, advanceExport, exportTemplate } from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getClaOptions} from '@api/classification'
 import {getSupplierOptions} from '@api/supplier'
@@ -497,6 +513,7 @@ export default {
     }
     return {
       id: '',
+      isImport: false,
       isAdvanceSearch: false,
       searchPattern: '',
       isVisible: true,
@@ -612,6 +629,38 @@ export default {
     //     return 'background: #F6F6F7'
     //   }
     // },
+    importExceed (files, fileList) {
+      this.$message.warning('只能上传一个Excel文件！')
+    },
+    importSuccess (res, file) {
+      if (res.status) {
+        this.$notify({
+          title: res.data,
+          message: res.message,
+          type: 'success',
+          duration: 0
+        })
+      } else {
+        this.$notify.error({
+          title: '导入错误',
+          message: res.message,
+          duration: 0
+        })
+      }
+      this.isImport = false
+      this.getCommodities()
+    },
+    exportTemplate () {
+      exportTemplate().then(res => {
+        let blob = new Blob([res], {type: 'application/vnd.ms-excel'})
+        let url = window.URL.createObjectURL(blob)
+        let a = document.createElement('a')
+        a.href = url
+        a.download = '导入模板.xls'
+        a.click()
+        window.URL.revokeObjectURL(url)
+      })
+    },
     exportCommodities () {
       if (this.isAdvanceSearch) {
         advanceExport(this.advanceQuery).then(res => {
@@ -753,7 +802,7 @@ export default {
         // console.info(this.barcodes.length)
         // console.info(this.originBarcodesLength)
         let param = JSON.stringify(this.barcodes.slice(this.originBarcodesLength, this.barcodes.length))
-        await addBarcodes(param).then(res => {
+        await addBarcodes(param, this.query).then(res => {
           res2 = res.data
         })
       }
