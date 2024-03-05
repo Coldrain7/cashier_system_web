@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div style="background-color: white">
+        <div>
                 <el-form :inline="true" style="padding: 0px;text-align: right;">
                     <el-form-item style="margin: 0px;padding-left: 10px">
                         <el-input size="mini" v-model="query.name" placeholder="商品名称/条码"></el-input>
@@ -502,7 +502,7 @@ import {getSupplierOptions} from '@api/supplier'
 import {getUnitOptions, addUnit, deleteUnitById} from '@api/unit'
 import store from '../../../../store'
 export default {
-  name: 'Second',
+  name: 'Commodity',
   data () {
     var validateNumber = (rule, value, callback) => {
       if (!/\d+/.test(value)) {

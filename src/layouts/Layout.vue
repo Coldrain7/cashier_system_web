@@ -95,6 +95,7 @@ export default {
     background-color: #f3f5f9;
   }
   .layout-content {
+    background-color: white;
     height: calc(~'100% - 60px');
     width: 100%;
     overflow: auto;

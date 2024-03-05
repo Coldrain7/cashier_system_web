@@ -22,6 +22,11 @@ export default {
               path: '/main/commodity/commodity',
               icon: 'suncaper-menu-unfold',
               title: '商品资料'
+            },
+            {
+              path: '/main/commodity/classification',
+              icon: 'suncaper-menu-unfold',
+              title: '商品分类'
             }
           ]
         },

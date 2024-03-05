@@ -48,6 +48,14 @@ const mainPage = [
             )
       },
       {
+        path: 'commodity/classification',
+        name: 'commodity',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Classification.vue'
+            )
+      },
+      {
         path: 'bookList',
         name: 'bookList',
         component: () =>
