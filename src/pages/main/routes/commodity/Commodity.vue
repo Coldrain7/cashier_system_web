@@ -543,7 +543,7 @@ export default {
       formattedUnits: [],
       supplierOptions: [],
       tableHeight: window.innerHeight - 140, // 表格动态高度
-      total: '',
+      total: 0,
       drawer: false,
       query: {
         pageNo: 1,
