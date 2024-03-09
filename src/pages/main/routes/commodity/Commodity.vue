@@ -176,7 +176,8 @@
                             <el-form-item prop="barcode">
                                 <el-input v-model="form.barcode">
                                     <template slot="prepend"><a style="color: red">* </a>商品条码</template>
-                                    <el-button v-show="form.isMultibarcode" slot="append" class="edit-button" @click="editBarcodes" icon="el-icon-edit-outline"></el-button>
+                                    <el-button v-show="form.isMultibarcode" slot="append" class="edit-button"
+                                               @click="editBarcodes" icon="el-icon-edit-outline"></el-button>
                                 </el-input>
                             </el-form-item>
                         </div>
