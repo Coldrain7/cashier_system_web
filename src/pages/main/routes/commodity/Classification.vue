@@ -16,13 +16,19 @@
     </div>
     <div>
         <el-table
-            ref="myTable"
             :data="tableData"
-            style="width: 100%;margin-bottom: 20px;"
+            :row-style="{height: 40 +'px'}"
+            :cell-style="{padding:0+'px'}"
+            style="width: 100%;"
             row-key="id"
             border
             default-expand-all
             :tree-props="{children: 'children'}">
+            <el-table-column
+                type="index"
+                label="序号"
+                width="50px">
+            </el-table-column>
             <el-table-column
                 prop="classification"
                 label="分类名称"
