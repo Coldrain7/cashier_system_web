@@ -14,3 +14,7 @@ export const advanceSearchPage = query => http.POST('./api/commodity/advanceSear
 export const exportCommodities = commodity => http.EXPORT('./api/commodity/exportCommodities', commodity)
 export const advanceExport = map => http.EXPORT('./api/commodity/advanceExport', map)
 export const exportTemplate = () => http.EXPORT('./api/commodity/exportTemplate')
+export const getCombinations = supId => http.GET('./api/commodity/getCombinations', supId)
+export const getCommodityByBarcode = commodity => http.GET('./api/commodity/getCommodity', commodity)
+export const deleteCombination = commodity => http.POST('./api/commodity/deleteCombination', commodity)
+export const searchCombinations = commodity => http.GET('./api/commodity/searchCombinations', commodity)

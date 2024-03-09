@@ -27,6 +27,11 @@ export default {
               path: '/main/commodity/classification',
               icon: 'suncaper-menu-unfold',
               title: '商品分类'
+            },
+            {
+              path: '/main/commodity/combination',
+              icon: 'suncaper-menu-unfold',
+              title: '组合拆分'
             }
           ]
         },

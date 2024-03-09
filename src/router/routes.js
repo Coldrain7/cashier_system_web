@@ -41,7 +41,7 @@ const mainPage = [
       },
       {
         path: 'commodity/commodity',
-        name: 'commodity',
+        name: 'Commodity',
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Commodity.vue'
@@ -49,10 +49,18 @@ const mainPage = [
       },
       {
         path: 'commodity/classification',
-        name: 'commodity',
+        name: 'Classification',
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Classification.vue'
+            )
+      },
+      {
+        path: 'commodity/combination',
+        name: 'Combination',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Combination.vue'
             )
       },
       {
