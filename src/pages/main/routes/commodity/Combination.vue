@@ -250,7 +250,8 @@
 </template>
 
 <script>
-import {getCombinations, getCommodityByBarcode, updateCommodity, getCommodityById, deleteCombination, searchCombinations} from '@api/commodity'
+import {getCombinations, getCommodityByBarcode, updateCommodity, getCommodityById, deleteCombination,
+  searchCombinations, isCombined} from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import store from '../../../../store'
 export default {
@@ -370,22 +371,38 @@ export default {
     },
     saveNewCombination () {
       if (this.parentCommodity.id > 0 && this.childCommodity.id > 0) {
-        this.childCommodity.parent = this.parentCommodity.id
-        this.childCommodity.specification = '1x' + `${this.specification.secondNum}`
-        this.childCommodity.createTime = ''
-        this.childCommodity.updateTime = ''
-        updateCommodity(this.childCommodity).then(res => {
-          if (res.status) {
-            if (res.data) {
-              this.$message.success('保存成功')
-              this.drawerVisible = false
-              this.getCombinations()
-            } else {
-              this.$message.error('保存失败')
-            }
-          } else {
+        this.parentCommodity.createTime = ''
+        this.parentCommodity.updateTime = ''
+        isCombined(this.parentCommodity).then(res => {
+          if (res.data) {
             this.$message.error(res.message)
+            // 如果res.data为true，则不执行后续操作，这里可以添加return来提前终止Promise链
+            return
           }
+
+          // res.data为false，执行以下操作
+          this.childCommodity.parent = this.parentCommodity.id
+          this.childCommodity.specification = '1x' + this.specification.secondNum
+          this.childCommodity.createTime = ''
+          this.childCommodity.updateTime = ''
+
+          // 调用updateCommodity并处理返回的Promise
+          return updateCommodity(this.childCommodity).then(updateRes => {
+            if (updateRes.status) {
+              if (updateRes.data) {
+                this.$message.success('保存成功')
+                this.drawerVisible = false
+                this.getCombinations()
+              } else {
+                this.$message.error('保存失败')
+              }
+            } else {
+              this.$message.error(updateRes.message)
+            }
+          })
+        }).catch(error => {
+          // 处理isCombined或updateCommodity中可能出现的错误
+          this.$message.error('操作中发生错误：' + error.message)
         })
       }
     },

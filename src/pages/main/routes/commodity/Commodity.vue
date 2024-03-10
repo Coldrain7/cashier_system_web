@@ -918,14 +918,14 @@ export default {
     saveChange () {
       // console.info(this.form)
       updateCommodity(this.form).then(res => {
-        if (res.data === true) {
+        if (res.data) {
           this.$message({
             message: '保存成功',
             type: 'success'
           })
           this.getCommodities()
         } else {
-          this.$message.error('保存失败')
+          this.$message.error(res.message)
         }
         this.drawer = false
       })
