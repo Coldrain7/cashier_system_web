@@ -44,7 +44,7 @@ export default {
             {
               path: '/main/member/member',
               icon: 'suncaper-menu-unfold',
-              title: '二级菜单'
+              title: '会员资料'
             }
           ]
         }
