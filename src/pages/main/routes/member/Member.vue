@@ -65,8 +65,8 @@
                     fixed="right"
                     label="操作"
                     width="100">
-                    <template slot-scope="scope"><!--@click="editRow(scope.$index)"-->
-                        <el-button type="text" size="small">编辑</el-button>
+                    <template slot-scope="scope">
+                        <el-button type="text" @click="editRow(scope.$index)" size="small">编辑</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -79,6 +79,47 @@
                 layout="total, sizes, prev, pager, next, jumper"
                 :total="total">
             </el-pagination>
+            <el-dialog width="350px" title="会员信息" :visible.sync="editVisible">
+                <el-form :model="form" :rules="rules" ref="form" label-width="0px"
+                         label-position="left" style="padding-top: 50px; padding-left: 5px">
+                    <div  style="width: 300px;">
+                        <el-form-item prop="name">
+                            <el-input v-model="form.name" >
+                                <template slot="prepend"><a style="color: red">* </a>姓名</template>
+                            </el-input>
+                        </el-form-item>
+                    </div>
+                    <div  style="width: 300px;">
+                        <el-form-item prop="name">
+                            <el-input v-model="form.phone" >
+                                <template slot="prepend"><a style="color: red">* </a>电话</template>
+                            </el-input>
+                        </el-form-item>
+                    </div>
+                    <div  style="width: 300px;">
+                        <el-form-item prop="name">
+                            <el-input v-model="form.point" >
+                                <template slot="prepend">积分</template>
+                            </el-input>
+                        </el-form-item>
+                    </div>
+                    <div class="space-container">
+                        <el-button icon="el-icon-delete" style="background-color: #F56C6C;color: white" @click="deleteDialog = true">删除</el-button>
+                        <el-button type="primary" @click="saveNewCombination">保存</el-button>
+                    </div>
+                </el-form>
+                <el-dialog
+                    title="确认删除该会员信息吗？"
+                    width="400px"
+                    :close-on-click-modal="false"
+                    append-to-body
+                    :visible.sync="deleteDialog">
+                    <div class="space-container">
+                        <el-button @click="deleteDialog = false">取 消</el-button>
+                        <el-button style="background-color: #F56C6C;color: white" @click="deleteCombination">确 认</el-button>
+                    </div>
+                </el-dialog>
+            </el-dialog>
         </div>
     </div>
 </template>
@@ -90,10 +131,21 @@ import store from '../../../../store'
 export default {
   name: 'Member',
   data () {
+    var validatePhoneNumber = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入电话号码'))
+      } else if (!/^\d{11}$/.test(value)) {
+        callback(new Error('请输入正确电话号码'))
+      } else {
+        callback()
+      }
+    }
     return {
       id: '',
       tableData: [],
       total: 0,
+      editVisible: false,
+      deleteDialog: false,
       tableHeight: window.innerHeight - 140, // 表格动态高度
       query: {
         supId: '',
@@ -104,10 +156,34 @@ export default {
         id: '',
         phone: '',
         name: ''
+      },
+      form: {
+        id: '',
+        phone: '',
+        name: '',
+        point: '',
+        supId: '',
+        createTime: ''
+      },
+      rules: {
+        name: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
+        phone: [{ required: true, message: '电话不能为空', trigger: 'blur' },
+          {validator: validatePhoneNumber, message: '请输入电话号码', trigger: 'blur'}]
       }
     }
   },
   methods: {
+    editRow (rowIndex) {
+      this.editVisible = true
+      // console.info(this.tableData[rowIndex])
+      for (const key in this.form) {
+        // 如果 data 对象中存在与 form 对象相同的属性
+        if (this.tableData[rowIndex].hasOwnProperty(key)) {
+          // 将 data 对象的属性值赋给 form 对象的相应属性
+          this.form[key] = this.tableData[rowIndex][key]
+        }
+      }
+    },
     handleCurrentChange (value) {
       this.query.pageNo = value
       this.getMemberPage()
@@ -161,5 +237,10 @@ export default {
 </script>
 
 <style scoped>
-
+.space-container{
+    display: flex;
+    justify-content: space-between;
+    padding-left: 20px;
+    padding-right: 20px;
+}
 </style>
