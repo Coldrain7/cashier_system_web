@@ -163,7 +163,8 @@
                 <el-button type="text" @click="exportTemplate">下载模板</el-button>
             </el-dialog>
             <el-drawer :visible.sync="drawer" size="610px" :with-header="false">
-                <el-form :model="form" :rules="rules" ref="form" label-width="0px" label-position="left" style="padding-top: 50px; padding-left: 5px">
+                <el-form :model="form" :rules="rules" ref="form" label-width="0px"
+                         label-position="left" style="padding-top: 50px; padding-left: 5px">
                     <div  style="width: 600px;">
                         <el-form-item prop="name">
                             <el-input v-model="form.name" >
@@ -277,7 +278,7 @@
                         </el-form-item>
                     </div>
                         <div v-show="!isVisible" style="position:absolute;bottom:5px;left: 10px;display: none">
-                            <el-button type="danger" style="background-color: #F56C6C" @click="deleteCommodity">删除</el-button>
+                            <el-button type="danger" style="background-color: #F56C6C" @click="deleteDialog = true">删除</el-button>
                         </div>
                         <div v-show="!isVisible" style="position:absolute;bottom:5px;right: 10px;display: none">
                             <el-button type="primary" @click="saveChange">保存</el-button>
@@ -286,6 +287,16 @@
                         <el-button type="primary" @click="saveCommodity">新增</el-button>
                     </div>
                 </el-form>
+                <el-dialog
+                    title="确认删除商品吗？"
+                    :close-on-click-modal="false"
+                    append-to-body
+                    :visible.sync="deleteDialog">
+                    <div class="bottom-container">
+                        <el-button @click="deleteDialog = false">取 消</el-button>
+                        <el-button style="background-color: #F56C6C;color: white" @click="deleteCommodity">确 认</el-button>
+                    </div>
+                </el-dialog>
                 <el-dialog class="el-dialog__body" :title="form.name" :visible.sync="dialogTableVisible" append-to-body>
                     <div style="padding-top: 0px">
                         <el-input style="width: 600px; padding-left: 10px" v-model="form.barcode"><template slot="prepend">主条码</template></el-input>、
@@ -389,7 +400,7 @@
                             <p>规格：</p>
                         </el-form-item>
                         <el-form-item>
-                            <el-input style="padding-top: 15px" v-model="advanceQuery.specification" placeholder="商品名称/条码"></el-input>
+                            <el-input style="padding-top: 15px" v-model="advanceQuery.specification" placeholder="规格"></el-input>
                         </el-form-item>
                     </div>
                     <el-divider></el-divider>
@@ -512,11 +523,21 @@ export default {
         callback()
       }
     }
+    var validatePattern = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入内容'))
+      } else if (!/^\d+x\d+$/.test(value)) {
+        callback(new Error('请输入符合格式的内容，例如：1x4'))
+      } else {
+        callback()
+      }
+    }
     return {
       id: '',
       isImport: false,
       isAdvanceSearch: false,
       searchPattern: '',
+      deleteDialog: false,
       isVisible: true,
       dialogTableVisible: false,
       unitEditVisible: false,
@@ -611,6 +632,9 @@ export default {
         ],
         wholesalePrice: [
           {validator: validateNumber, message: '请输入数字', trigger: 'blur'}
+        ],
+        specification: [
+          {validator: validatePattern, message: '请输入正确格式，如：1x4', trigger: 'blur'}
         ]
       }
     }
@@ -744,20 +768,24 @@ export default {
       })
     },
     addUnit () {
-      addUnit(this.newUnit).then(res => {
-        if (res.data) {
-          this.$message({
-            message: '创建成功',
-            type: 'success'
-          })
-          getUnitOptions({supId: this.query.supId}).then(res => {
-            this.unitOptions = res.data
-            this.formatUnit()
-          })
-        } else {
-          this.$message.error('创建失败，单位已存在')
-        }
-      })
+      if (this.newUnit.unit !== '') {
+        addUnit(this.newUnit).then(res => {
+          if (res.data) {
+            this.$message({
+              message: '创建成功',
+              type: 'success'
+            })
+            getUnitOptions({supId: this.query.supId}).then(res => {
+              this.unitOptions = res.data
+              this.formatUnit()
+            })
+          } else {
+            this.$message.error('创建失败，单位已存在')
+          }
+        })
+      } else {
+        this.$message.error('单位名不能为空')
+      }
     },
     closePopover (rowIndex, index) {
       this.$set(this.popoverVisible, rowIndex * 6 + index, false)
@@ -916,18 +944,22 @@ export default {
       // console.info(this.form)
     },
     saveChange () {
-      // console.info(this.form)
-      updateCommodity(this.form).then(res => {
-        if (res.data) {
-          this.$message({
-            message: '保存成功',
-            type: 'success'
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          // console.info(this.form)
+          updateCommodity(this.form).then(res => {
+            if (res.data) {
+              this.$message({
+                message: '保存成功',
+                type: 'success'
+              })
+              this.getCommodities()
+            } else {
+              this.$message.error(res.message)
+            }
+            this.drawer = false
           })
-          this.getCommodities()
-        } else {
-          this.$message.error(res.message)
         }
-        this.drawer = false
       })
     },
     deleteCommodity () {
