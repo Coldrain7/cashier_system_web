@@ -7,7 +7,7 @@
                     </el-form-item>
                     <el-form-item  style="margin: 0px;padding-left: 10px">
                         <template>
-                            <el-select size="mini" v-model="query.claId" placeholder="选择分类">
+                            <el-select size="mini" filterable v-model="query.claId" placeholder="选择分类">
                                 <el-option
                                     v-for="item in classificationOptions"
                                     :key="item.id"

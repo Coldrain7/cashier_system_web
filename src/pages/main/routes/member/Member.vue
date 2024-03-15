@@ -9,10 +9,10 @@
                     <el-button type="primary" icon="el-icon-search" @click="getMemberPage" size="mini">搜索</el-button>
                 </el-form-item>
                 <el-form-item style="margin: 0px;">
-                    <el-button type="primary" icon="el-icon-plus" size="mini">新增</el-button>
+                    <el-button type="primary" icon="el-icon-plus" @click="clickAdd" size="mini">新增</el-button>
                 </el-form-item>
                 <el-form-item style="margin: 0px;padding-right: 20px">
-                    <el-button type="primary" icon="el-icon-download" size="mini">导出</el-button>
+                    <el-button type="primary" icon="el-icon-download" @click="exportMembers" size="mini">导出</el-button>
                 </el-form-item>
             </el-form>
         </div>
@@ -90,22 +90,23 @@
                         </el-form-item>
                     </div>
                     <div  style="width: 300px;">
-                        <el-form-item prop="name">
+                        <el-form-item prop="phone">
                             <el-input v-model="form.phone" >
                                 <template slot="prepend"><a style="color: red">* </a>电话</template>
                             </el-input>
                         </el-form-item>
                     </div>
                     <div  style="width: 300px;">
-                        <el-form-item prop="name">
+                        <el-form-item prop="point">
                             <el-input v-model="form.point" >
                                 <template slot="prepend">积分</template>
                             </el-input>
                         </el-form-item>
                     </div>
                     <div class="space-container">
-                        <el-button icon="el-icon-delete" style="background-color: #F56C6C;color: white" @click="deleteDialog = true">删除</el-button>
-                        <el-button type="primary" @click="saveNewCombination">保存</el-button>
+                        <el-button v-show="isAddVisible" icon="el-icon-delete" style="background-color: #F56C6C;color: white" @click="deleteDialog = true">删除</el-button>
+                        <el-button v-show="!isAddVisible" @click="editVisible = false">取消</el-button>
+                        <el-button type="primary" @click="saveMember">保存</el-button>
                     </div>
                 </el-form>
                 <el-dialog
@@ -116,7 +117,7 @@
                     :visible.sync="deleteDialog">
                     <div class="space-container">
                         <el-button @click="deleteDialog = false">取 消</el-button>
-                        <el-button style="background-color: #F56C6C;color: white" @click="deleteCombination">确 认</el-button>
+                        <el-button style="background-color: #F56C6C;color: white" @click="deleteMember">确 认</el-button>
                     </div>
                 </el-dialog>
             </el-dialog>
@@ -125,7 +126,7 @@
 </template>
 
 <script>
-import {memberPage} from '@api/member'
+import {memberPage, updateMember, createMember, deleteMemberById, exportMembers} from '@api/member'
 import {getSupIdById} from '@api/user'
 import store from '../../../../store'
 export default {
@@ -142,6 +143,7 @@ export default {
     }
     return {
       id: '',
+      isAddVisible: true,
       tableData: [],
       total: 0,
       editVisible: false,
@@ -168,13 +170,71 @@ export default {
       rules: {
         name: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
         phone: [{ required: true, message: '电话不能为空', trigger: 'blur' },
-          {validator: validatePhoneNumber, message: '请输入电话号码', trigger: 'blur'}]
+          {validator: validatePhoneNumber, message: '请输入正确电话号码', trigger: 'blur'}]
       }
     }
   },
   methods: {
+    exportMembers () {
+      exportMembers(this.query).then(res => {
+        let blob = new Blob([res], {type: 'application/vnd.ms-excel'})
+        let url = window.URL.createObjectURL(blob)
+        let a = document.createElement('a')
+        a.href = url
+        a.download = '会员资料.xls'
+        a.click()
+        window.URL.revokeObjectURL(url)
+      })
+    },
+    deleteMember () {
+      deleteMemberById(this.form).then(res => {
+        if (res.data) {
+          this.$message.success('删除成功')
+          this.deleteDialog = false
+          this.editVisible = false
+          this.getMemberPage()
+        } else {
+          this.$message.error('删除失败')
+        }
+      })
+    },
+    clickAdd () {
+      this.editVisible = true
+      this.isAddVisible = false
+      for (const key in this.form) {
+        this.form[key] = ''
+      }
+    },
+    saveMember () {
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          if (this.isAddVisible) {
+            updateMember(this.form).then(res => {
+              if (res.status) {
+                this.$message.success(res.message)
+              } else {
+                this.$message.error(res.message)
+              }
+            })
+          } else {
+            this.form.supId = this.query.supId
+            createMember(this.form).then(res => {
+              if (res.status) {
+                this.$message.success(res.message)
+                this.query.name = res.data
+                this.getMemberPage()
+                this.editVisible = false
+              } else {
+                this.$message.error(res.message)
+              }
+            })
+          }
+        }
+      })
+    },
     editRow (rowIndex) {
       this.editVisible = true
+      this.isAddVisible = true
       // console.info(this.tableData[rowIndex])
       for (const key in this.form) {
         // 如果 data 对象中存在与 form 对象相同的属性
