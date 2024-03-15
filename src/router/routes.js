@@ -64,6 +64,14 @@ const mainPage = [
             )
       },
       {
+        path: 'commodity/expiration',
+        name: 'Expiration',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Expiration.vue'
+            )
+      },
+      {
         path: 'bookList',
         name: 'bookList',
         component: () =>

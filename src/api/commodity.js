@@ -19,3 +19,4 @@ export const getCommodityByBarcode = commodity => http.GET('./api/commodity/getC
 export const deleteCombination = commodity => http.POST('./api/commodity/deleteCombination', commodity)
 export const searchCombinations = commodity => http.GET('./api/commodity/searchCombinations', commodity)
 export const isCombined = commodity => http.GET('./api/commodity/isCombined', commodity)
+export const searchWarning = query => http.POST('./api/commodity/searchWarning', query)

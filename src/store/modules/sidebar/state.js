@@ -32,6 +32,11 @@ export default {
               path: '/main/commodity/combination',
               icon: 'suncaper-menu-unfold',
               title: '组合拆分'
+            },
+            {
+              path: '/main/commodity/expiration',
+              icon: 'suncaper-menu-unfold',
+              title: '库存预警'
             }
           ]
         },
