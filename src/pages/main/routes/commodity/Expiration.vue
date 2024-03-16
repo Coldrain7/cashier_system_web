@@ -138,11 +138,43 @@
               size="large"
               :timestamp="data.timestamp">
               <el-card>
-                  <h4>{{data.name}}</h4>
-                  <p>距离过期还剩：{{ data.gapDays }}天</p>
+                  <h4>
+                      <span style="margin-right: 20px;">{{data.name}}</span>
+                      <span style="margin-right: 20px;">条码：{{data.barcode}}</span>
+                      <el-button type="text" size="medium" @click="editRow(index)">修改日期信息</el-button>
+                  </h4>
+                      <span style="margin-right: 20px;">距离过期还剩：{{ data.gapDays }}天</span>
+                      <span style="margin-right: 20px;">生产日期：{{data.produceDate}}</span>
+                      <span style="margin-right: 20px;">保质期{{data.expirationTime}}</span>
+                      <span style="margin-right: 20px;">分类：{{data.classification.classification}}</span>
+                      <span style="margin-right: 20px;">供应商：{{data.supplier.name}}</span>
               </el-card>
           </el-timeline-item>
       </el-timeline>
+      <el-dialog
+          :title="form.name"
+          :close-on-click-modal="false"
+          :visible.sync="timeLineDialog">
+          <div style="padding-top: 20px">
+              <div class="bottom-container">
+                  <el-date-picker
+                      v-model="timeInfo.produceDate"
+                      type="date"
+                      value-format="yyyy-MM-dd'T'HH:mm:ss"
+                      placeholder="选择生产日期">
+                  </el-date-picker>
+                  <el-input v-model.trim="timeInfo.expirationTime" placeholder="请填整数数字">
+                      <template slot="prepend">保质期</template><template slot="append">天</template>
+                  </el-input>
+              </div>
+              <div style="padding-top: 10px">
+                  <div class="bottom-container">
+                      <el-button @click="timeLineDialog = false">取 消</el-button>
+                      <el-button style="background-color: #67C23A;color: white" @click="saveDate">保 存</el-button>
+                  </div>
+              </div>
+          </div>
+      </el-dialog>
   </div>
 </template>
 
@@ -167,6 +199,7 @@ export default {
       tableData: [],
       total: 0,
       editDialog: false,
+      timeLineDialog: false,
       tableHeight: window.innerHeight - 150,
       classificationOptions: [{id: 0, classification: '全部分类'}],
       supplierOptions: [{id: 0, name: '全部供应商'}],
@@ -179,6 +212,11 @@ export default {
         pageNo: 1,
         pageSize: 20,
         num: ''
+      },
+      timeInfo: {
+        id: '',
+        produceDate: '',
+        expirationTime: ''
       },
       form: {
         id: '',
@@ -198,6 +236,22 @@ export default {
     }
   },
   methods: {
+    saveDate () {
+      if (/\d+/.test(this.timeInfo.expirationTime)) {
+        updateCommodity(this.timeInfo).then(res => {
+          this.timeInfo.id = this.form.id
+          if (res.data) {
+            this.$message.success('保存成功')
+            this.getCommodities()
+            this.timeLineDialog = false
+          } else {
+            this.$message.error(res.message)
+          }
+        })
+      } else {
+        this.$message.error('请输入数字')
+      }
+    },
     handleSelectChange () {
       this.tableData = []
     },
@@ -218,7 +272,6 @@ export default {
       }
     },
     editRow (rowIndex) {
-      this.editDialog = true
       // console.info(this.tableData[rowIndex])
       for (const key in this.form) {
         // 如果 data 对象中存在与 form 对象相同的属性
@@ -226,6 +279,11 @@ export default {
           // 将 data 对象的属性值赋给 form 对象的相应属性
           this.form[key] = this.tableData[rowIndex][key]
         }
+      }
+      if (this.query.funcId !== 2) {
+        this.editDialog = true
+      } else {
+        this.timeLineDialog = true
       }
     },
     computeDays () {
@@ -260,6 +318,10 @@ export default {
             this.total = res.data.total
             if (this.query.funcId === 2) {
               this.computeDays()
+              for (let item of this.tableData) {
+                item.expirationTime = this.formatExpiration(item)
+                item.produceDate = this.formatDate(item)
+              }
             }
           })
         }
