@@ -28,17 +28,17 @@
             <el-table-column
                     prop="parentName"
                     label="组合后商品"
-                    width="180px">
+                    width="240px">
             </el-table-column>
             <el-table-column
                 prop="parentBarcode"
                 label="组合后商品条码"
-                width="180px">
+                width="200px">
             </el-table-column>
             <el-table-column
                 prop="parentPurchasePrice"
                 label="组合后商品进价"
-                width="120px">
+                width="140px">
             </el-table-column>
             <el-table-column
                 prop="childSpecification"
@@ -48,22 +48,22 @@
             <el-table-column
                 prop="childName"
                 label="拆分后商品"
-                width="180px">
+                width="240px">
             </el-table-column>
             <el-table-column
                 prop="childBarcode"
                 label="拆分后商品条码"
-                width="180px">
+                width="200px">
             </el-table-column>
             <el-table-column
                 prop="childPurchasePrice"
                 label="拆分后商品进价"
-                width="120px">
+                width="140px">
             </el-table-column>
             <el-table-column
                     fixed="right"
                     label="操作"
-                    width="70px">
+                    width="100px">
                 <template slot-scope="scope">
                     <el-button type="text" size="small" @click="editRow(scope.$index)">编辑</el-button>
                 </template>

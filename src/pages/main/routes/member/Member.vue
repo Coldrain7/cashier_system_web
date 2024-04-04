@@ -29,37 +29,37 @@
                     type="index"
                     :index="indexMethod"
                     label="序号"
-                    width="50">
+                    width="100">
                 </el-table-column>
                 <el-table-column
                     prop="id"
                     label="会员号"
                     sortable
-                    width="200">
+                    width="240">
                 </el-table-column>
                 <el-table-column
                     prop="name"
                     label="姓名"
                     sortable
-                    width="200">
+                    width="240">
                 </el-table-column>
                 <el-table-column
                     prop="phone"
                     label="电话"
-                    width="200">
+                    width="240">
                 </el-table-column>
                 <el-table-column
                     prop="point"
                     label="积分"
                     sortable
-                    width="200">
+                    width="240">
                 </el-table-column>
                 <el-table-column
                     prop="createTime"
                     label="创建时间"
                     :formatter="formatTime"
                     sortable
-                    width="200">
+                    width="240">
                 </el-table-column>
                 <el-table-column
                     fixed="right"

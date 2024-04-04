@@ -32,7 +32,7 @@
             <el-table-column
                 prop="classification"
                 label="分类名称"
-                width="900px">
+                width="1200px">
             </el-table-column>
             <el-table-column
                 fixed="right"

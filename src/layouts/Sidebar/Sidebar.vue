@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div>
     <div id="sidebar-logo" class="sidebar-logo" :style="{backgroundColor: theme === 'light' ? '#ffffff' : '#1f2c35'}">
       <div class="sidebar-logo-png">

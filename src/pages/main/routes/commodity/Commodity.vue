@@ -277,10 +277,10 @@
                             <el-input v-model="form.expirationTime"><template slot="prepend">保质期</template><template slot="append">天</template></el-input>
                         </el-form-item>
                     </div>
-                        <div v-show="!isVisible" style="position:absolute;bottom:5px;left: 10px;display: none">
+                        <div v-show="editVisible" style="position:absolute;bottom:5px;left: 10px;">
                             <el-button type="danger" style="background-color: #F56C6C" @click="deleteDialog = true">删除</el-button>
                         </div>
-                        <div v-show="!isVisible" style="position:absolute;bottom:5px;right: 10px;display: none">
+                        <div v-show="editVisible" style="position:absolute;bottom:5px;right: 10px;">
                             <el-button type="primary" @click="saveChange">保存</el-button>
                         </div>
                     <div v-show="isVisible" ref="addButton" style="position:absolute;bottom:5px;right: 10px;display: none">
@@ -539,6 +539,7 @@ export default {
       searchPattern: '',
       deleteDialog: false,
       isVisible: true,
+      editVisible: false,
       dialogTableVisible: false,
       unitEditVisible: false,
       advanceVisible: false,
@@ -923,7 +924,8 @@ export default {
     editRow (rowIndex) {
       this.drawer = true
       this.isVisible = false
-      // console.info(this.tableData[rowIndex])
+      this.editVisible = true
+      console.info(this.editVisible)
       for (const key in this.form) {
         // 如果 data 对象中存在与 form 对象相同的属性
         if (this.tableData[rowIndex].hasOwnProperty(key)) {
@@ -980,6 +982,8 @@ export default {
     addCommodity () {
       this.drawer = true
       this.isVisible = true
+      this.editVisible = false
+      console.info(this.editVisible)
       for (const key in this.form) {
         this.form[key] = ''
       }
