@@ -37,6 +37,11 @@ export default {
               path: '/main/commodity/expiration',
               icon: 'suncaper-menu-unfold',
               title: '库存预警'
+            },
+            {
+              path: '/main/commodity/supplier',
+              icon: 'suncaper-menu-unfold',
+              title: '供应商'
             }
           ]
         },

@@ -40,6 +40,14 @@ const mainPage = [
             )
       },
       {
+        path: 'commodity/supplier',
+        name: 'Supplier',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Supplier.vue'
+            )
+      },
+      {
         path: 'commodity/commodity',
         name: 'Commodity',
         component: () =>
