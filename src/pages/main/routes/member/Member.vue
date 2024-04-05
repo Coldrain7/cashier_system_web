@@ -34,13 +34,13 @@
                 <el-table-column
                     prop="id"
                     label="会员号"
-                    sortable
+                    sortable="custom"
                     width="240">
                 </el-table-column>
                 <el-table-column
                     prop="name"
                     label="姓名"
-                    sortable
+                    sortable="custom"
                     width="240">
                 </el-table-column>
                 <el-table-column
@@ -51,14 +51,14 @@
                 <el-table-column
                     prop="point"
                     label="积分"
-                    sortable
+                    sortable="custom"
                     width="240">
                 </el-table-column>
                 <el-table-column
                     prop="createTime"
                     label="创建时间"
                     :formatter="formatTime"
-                    sortable
+                    sortable="custom"
                     width="240">
                 </el-table-column>
                 <el-table-column

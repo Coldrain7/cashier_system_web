@@ -52,13 +52,13 @@
                 <el-table-column
                     prop="name"
                     label="商品名称"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
                     prop="barcode"
                     label="条码"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
@@ -69,7 +69,7 @@
                 <el-table-column
                     prop="inventory"
                     label="库存"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
@@ -80,19 +80,19 @@
                 <el-table-column
                     prop="purchasePrice"
                     label="进货价"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
                     prop="price"
                     label="销售价"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
                     prop="wholesalePrice"
                     label="批发价"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
@@ -104,28 +104,28 @@
                 <el-table-column
                     prop="supplier.name"
                     label="供货商"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
                     prop="produceDate"
                     :formatter="formatDate"
                     label="生产日期"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
                     prop="expirationTime"
                     label="保质期"
                     :formatter="formatExpiration"
-                    sortableF
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
                     prop="createTime"
                     label="创建时间"
                     :formatter="formatTime"
-                    sortable
+                    sortable="custom"
                     width="180">
                 </el-table-column>
                 <el-table-column
