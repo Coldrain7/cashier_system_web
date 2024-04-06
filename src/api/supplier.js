@@ -4,3 +4,5 @@ export const getSupplier = supplier => http.GET('./api/supplier/getSuppliers', s
 export const getSupplierById = supplier => http.GET(`./api/supplier/${supplier.id}`, supplier)
 export const updateSupplier = supplier => http.GET('./api/supplier/updateSupplier', supplier)
 export const createSupplier = supplier => http.POST('./api/supplier/createSupplier', supplier)
+export const deleteById = supplier => http.DELETE(`./api/supplier/${supplier.id}`, supplier)
+export const exportSuppliers = supplier => http.EXPORT('./api/supplier/exportSuppliers', supplier)

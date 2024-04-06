@@ -12,7 +12,7 @@
         <el-button type="primary" icon="el-icon-plus" @click="clickAdd" size="mini">新增</el-button>
       </el-form-item>
       <el-form-item style="margin: 0px;padding-right: 20px">
-        <el-button type="primary" icon="el-icon-download"  size="mini">导出</el-button>
+        <el-button type="primary" icon="el-icon-download" @click="exportSuppliers" size="mini">导出</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -106,7 +106,7 @@
         :visible.sync="deleteDialog">
       <div class="space-container">
         <el-button @click="deleteDialog = false">取 消</el-button>
-        <el-button style="background-color: #F56C6C;color: white" >确 认</el-button>
+        <el-button style="background-color: #F56C6C;color: white" @click="deleteSupplier">确 认</el-button>
       </div>
     </el-dialog>
   </el-dialog>
@@ -114,7 +114,7 @@
 </template>
 <script>
 import store from '../../../../store'
-import {getSupplier, getSupplierById, updateSupplier, createSupplier} from '@api/supplier'
+import {getSupplier, getSupplierById, updateSupplier, createSupplier, deleteById, exportSuppliers} from '@api/supplier'
 import {getSupIdById} from '@api/user'
 export default {
   name: 'Supplier',
@@ -164,6 +164,29 @@ export default {
     }
   },
   methods: {
+    exportSuppliers () {
+      exportSuppliers(this.query).then(res => {
+        let blob = new Blob([res], {type: 'application/vnd.ms-excel'})
+        let url = window.URL.createObjectURL(blob)
+        let a = document.createElement('a')
+        a.href = url
+        a.download = '供应商资料.xls'
+        a.click()
+        window.URL.revokeObjectURL(url)
+      })
+    },
+    deleteSupplier () {
+      deleteById(this.form).then(res => {
+        if (res.data) {
+          this.$message.success('删除成功')
+          this.getSupplierPage()
+          this.deleteDialog = false
+          this.dialogVisible = false
+        } else {
+          this.$message.error('删除失败')
+        }
+      })
+    },
     getOneSupplier (sid) {
       getSupplierById({id: sid}).then(res => {
         this.tableData = []
