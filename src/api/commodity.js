@@ -20,3 +20,4 @@ export const deleteCombination = commodity => http.POST('./api/commodity/deleteC
 export const searchCombinations = commodity => http.GET('./api/commodity/searchCombinations', commodity)
 export const isCombined = commodity => http.GET('./api/commodity/isCombined', commodity)
 export const searchWarning = query => http.POST('./api/commodity/searchWarning', query)
+export const getCommoditiesByKeyword = commodity => http.GET('./api/commodity/getCommoditiesByKeyword', commodity)
