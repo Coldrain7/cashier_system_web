@@ -129,7 +129,7 @@ export default {
       }
     }
     var validateNumber = (rule, value, callback) => {
-      if (!/\d+/.test(value)) {
+      if (!/^\d+$/.test(value)) {
         callback(new Error('请输入数字'))
       } else {
         callback()
