@@ -69,14 +69,14 @@
                 </template>
             </el-table-column>
         </el-table>
-        <!--点击新增商品后弹出的抽屉-->
+        <!--点击新增后弹出的抽屉-->
         <el-drawer :visible.sync="drawerVisible" size="610px" :with-header="false">
             <el-form :model="parentCommodity" label-width="0px" label-position="left" style="padding-top: 50px; padding-left: 5px">
                 <div  style="width: 600px;">
                     <el-form-item>
                         <el-input
                             placeholder="输入条码查询获取商品信息"
-                            v-model="parentQuery.barcode" >
+                            v-model.trim="parentQuery.barcode" >
                             <template slot="prepend">组合商品主条码</template>
                             <el-button class="search-button" slot="append" icon="el-icon-search"
                                        @click="searchCommodity(1)"></el-button>
@@ -423,31 +423,40 @@ export default {
       this.editVisible = true
     },
     searchCommodity (val) {
+      const regex = /^\d+$/
       if (val) {
-        getCommodityByBarcode(this.parentQuery).then(res => {
-          if (res.status) {
-            this.parentCommodity = res.data
-            if (this.childCommodity.id > 0) {
-              let res = this.parentCommodity.purchasePrice / this.childCommodity.purchasePrice
-              this.specification.secondNum = this.formatNumber(res, 2)
-              this.specification.lastValue = this.specification.secondNum
+        if (regex.test(this.parentQuery.barcode)) {
+          getCommodityByBarcode(this.parentQuery).then(res => {
+            if (res.status) {
+              this.parentCommodity = res.data
+              if (this.childCommodity.id > 0) {
+                let res = this.parentCommodity.purchasePrice / this.childCommodity.purchasePrice
+                this.specification.secondNum = this.formatNumber(res, 2)
+                this.specification.lastValue = this.specification.secondNum
+              }
+            } else {
+              this.$message.error(res.message)
             }
-          } else {
-            this.$message.error(res.message)
-          }
-        })
+          })
+        } else {
+          this.$message.warning('请输入正确形式的条码')
+        }
       } else {
-        getCommodityByBarcode(this.childQuery).then(res => {
-          if (res.status) {
-            this.childCommodity = res.data
-            this.childPrice = this.childCommodity.purchasePrice
-            if (this.parentCommodity.id > 0) {
-              this.specification.secondNum = this.parentCommodity.purchasePrice / this.childCommodity.purchasePrice
+        if (regex.test(this.childQuery.barcode)) {
+          getCommodityByBarcode(this.childQuery).then(res => {
+            if (res.status) {
+              this.childCommodity = res.data
+              this.childPrice = this.childCommodity.purchasePrice
+              if (this.parentCommodity.id > 0) {
+                this.specification.secondNum = this.parentCommodity.purchasePrice / this.childCommodity.purchasePrice
+              }
+            } else {
+              this.$message.error(res.message)
             }
-          } else {
-            this.$message.error(res.message)
-          }
-        })
+          })
+        } else {
+          this.$message.warning('请输入正确形式的条码')
+        }
       }
     }
   },
