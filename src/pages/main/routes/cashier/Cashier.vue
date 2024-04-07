@@ -4,7 +4,7 @@
     <el-button icon="el-icon-plus" class="navi-button">新增会员</el-button>
     <el-button icon="el-icon-s-order" class="navi-button">销售单据</el-button>
     <el-button icon="el-icon-s-finance" class="navi-button">退货</el-button>
-    <el-button icon="el-icon-switch-button" class="navi-button">退出登录</el-button>
+    <el-button icon="el-icon-switch-button" class="navi-button" @click="quit">退出登录</el-button>
   </el-header>
   <el-main>
     <el-table
@@ -34,7 +34,7 @@
       </el-table-column>
       <el-table-column
           prop="price"
-          label="单价"
+          label="单价（元）"
           width="200">
       </el-table-column>
       <el-table-column
@@ -44,15 +44,42 @@
       </el-table-column>
       <el-table-column
           prop="nowPrice"
-          label="现价"
+          label="现价（元）"
           width="200">
+        <template slot-scope="scope">
+          <el-input v-model="scope.row.nowPrice" @change="editBarcode(scope.$index)">
+          </el-input>
+        </template>
       </el-table-column>
       <el-table-column
           prop="sum"
-          label="小计"
+          label="小计（元）"
           width="218">
       </el-table-column>
     </el-table>
+    <el-dialog title="选择商品" :visible.sync="dialogTableVisible">
+      <div style="padding-top: 0px">
+        <el-table :data="commodityData"
+                  max-height="300"
+                  :show-header="false">
+          <el-table-column
+              prop="barcode"
+              label="条码"
+              width="200">
+          </el-table-column>
+          <el-table-column
+              prop="name"
+              label="商品名称"
+              width="200">
+          </el-table-column>
+          <el-table-column
+              prop="price"
+              label="单价（元）"
+              width="100">
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
   </el-main>
   <el-footer>
     <div class="space-container">
@@ -63,10 +90,13 @@
         </div>
         <el-form :inline="true" style="padding: 0px;text-align: left;">
           <el-form-item style="margin: 0px;padding-left: 0px;">
-            <el-input size="mini" placeholder="商品名称/条码" prefix-icon="el-icon-search"></el-input>
+            <el-input size="mini" placeholder="商品名称/条码" prefix-icon="el-icon-search"
+                      ref="keywordInput" v-model.trim="query.barcode">
+            </el-input>
           </el-form-item>
           <el-form-item style="margin: 0px;padding-left: 0px">
-            <el-input size="mini" placeholder="会员号/手机号" prefix-icon="el-icon-search"></el-input>
+            <el-input size="mini" placeholder="会员号/手机号" prefix-icon="el-icon-search"
+                      ref="memberInput"></el-input>
           </el-form-item>
         </el-form>
       </div>
@@ -81,17 +111,57 @@
 </el-container>
 </template>
 <script>
+import {getCommoditiesByKeyword} from '@api/commodity'
+import {getSupIdById} from '@api/user'
+import store from '../../../../store'
 export default {
   data () {
     return {
+      id: '',
+      dialogTableVisible: false,
       rowSize: 0,
+      inputMode: 0,
       commodityNum: 0,
+      query: {
+        supId: '',
+        barcode: ''
+      },
       tableHeight: window.innerHeight - 160,
-      tableData: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-      placeholderData: [ {}, {}, {}, {}, {}, {}, {}, {}, {}, {} ]
+      tableData: [],
+      commodityData: [],
+      placeholderData: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
     }
   },
   methods: {
+    quit () {
+      // 清空本地浏览器用户信息
+      store.dispatch('user/clearUserInfo')
+      this.$router.push({path: '/login'})
+    },
+    getCommodities () {
+      getCommoditiesByKeyword(this.query).then(res => {
+        if (res.data.length === 1) { // 后端只查询到一个商品，直接对该商品进行操作
+          for (let i = 0; i < this.commodityData.length; i++) {
+            // 如果commodityData中已有此商品，数量加1,小计加上现价
+            if (this.commodityData[i]['barcode'] === res.data[0].barcode) {
+              this.commodityData[i].num += 1
+              this.commodityData[i].sum += this.commodityData[i].nowPrice
+              return
+            }
+          }
+          // commodityData中没有此商品，插入到commodityData中
+          let commodity = {}
+          commodity.barcode = res.data[0].barcode
+          commodity.name = res.data[0].name
+          commodity.price = res.data[0].price
+          commodity.nowPrice = res.data[0].price
+          commodity.num = 1
+          this.commodityData.push(commodity)
+        } else { // 后端查询到多个商品，显示出对话框表格
+          this.dialogTableVisible = true
+        }
+      })
+    },
     tableRow ({row, rowIndex}) {
       return 'background: #1F1F1F; padding: 0px'
     },
@@ -99,9 +169,34 @@ export default {
       if (index < this.rowSize) {
         return index
       }
+    },
+    handlePressKey (e) {
+      console.info('handlePressKey')
+      if (e.key === 'Enter') {
+        console.info('enter')
+      } else if (e.key === 'Shift') {
+        console.info('shift')
+        this.setFocus()
+        this.inputMode = this.inputMode === 0 ? 1 : 0
+      }
+    },
+    setFocus () {
+      if (this.inputMode === 0) {
+        this.$refs.keywordInput.focus()
+      } else if (this.inputMode === 1) {
+        this.$refs.memberInput.focus()
+      }
     }
   },
-  mounted: function () {
+  created () {
+    this.id = store.getters['user/getUserId']
+    this.tableData = this.placeholderData
+    getSupIdById({id: this.id}).then(res => {
+      this.query.supId = res.data
+    })
+  },
+  mounted () {
+    document.addEventListener('keydown', this.handlePressKey)
     // window.onresize:浏览器尺寸变化响应事件
     window.onresize = () => {
       return (() => {
