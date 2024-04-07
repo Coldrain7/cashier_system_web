@@ -141,6 +141,13 @@ export default {
         callback()
       }
     }
+    var validateDouble = (rule, value, callback) => {
+      if (value !== '' && !/^\d+(\.\d+)?$/.test(value)) {
+        callback(new Error('请输入正确的积分'))
+      } else {
+        callback()
+      }
+    }
     return {
       id: '',
       isAddVisible: true,
@@ -170,7 +177,8 @@ export default {
       rules: {
         name: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
         phone: [{ required: true, message: '电话不能为空', trigger: 'blur' },
-          {validator: validatePhoneNumber, message: '请输入正确电话号码', trigger: 'blur'}]
+          {validator: validatePhoneNumber, message: '请输入正确电话号码', trigger: 'blur'}],
+        point: [{validator: validateDouble, message: '请输入正确的积分', trigger: 'blur'}]
       }
     }
   },
