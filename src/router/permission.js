@@ -24,7 +24,8 @@ export default (store, routes, to, next) => {
     return false
   }
   let protectedRoutes = store.getters['permission/getPermission'](userType)
-
+  console.info(protectedRoutes)
+  console.info(to)
   let moduleName = to.matched[0].name
   if (!moduleName) {
     next(new Error('路由请添加name字段'))

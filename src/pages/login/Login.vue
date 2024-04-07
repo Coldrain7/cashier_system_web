@@ -34,7 +34,7 @@ export default {
       // axios.post('xxxx', yyy)
       userLogin(this.user).then(res => {
         // 这里的res就是后端直接返回的json数据
-        if (res.data === undefined) {
+        if (res.data === null) {
           // 没有这个用户
           this.$message({
             message: '用户名或密码不对，请重新输入',
@@ -45,7 +45,11 @@ export default {
             message: '登录成功',
             type: 'success'
           })
-          this.$router.push({path: '/main'})
+          if (res.data.type === 1) {
+            this.$router.push({path: '/main/overview'})
+          } else {
+            this.$router.push({path: '/cashier'})
+          }
         }
       })
     },

@@ -25,6 +25,12 @@ const mainPage = [
     redirect: '/login'
   },
   {
+    path: '/cashier',
+    name: 'cashier',
+    component: () =>
+        import(/* webpackChunkName: "Main" */ '../pages/main/routes/cashier/Cashier.vue')
+  },
+  {
     // 父级
     path: '/main',
     name: 'main',
