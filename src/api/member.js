@@ -4,3 +4,4 @@ export const updateMember = member => http.POST('./api/member/updateMember', mem
 export const createMember = member => http.POST('./api/member/createMember', member)
 export const deleteMemberById = member => http.DELETE(`./api/member/${member.id}`, member)
 export const exportMembers = member => http.EXPORT('./api/member/exportMembers', member)
+export const getMembers = query => http.GET('./api/member/getMembers', query)
