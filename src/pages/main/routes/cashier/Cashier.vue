@@ -40,13 +40,21 @@
           prop="num"
           label="数量"
           width="200">
+        <template slot-scope="scope">
+          <el-input type="number" @focus="handleNumFocus(scope.$index)" @blur="handleNumBlur(scope.$index)"
+                    :ref="'numInputRef'+scope.$index" @keydown.native.up.prevent
+                    @keydown.native.down.prevent v-model="scope.row.num">
+          </el-input>
+        </template>
       </el-table-column>
       <el-table-column
           prop="nowPrice"
           label="现价（元）"
           width="200">
         <template slot-scope="scope">
-          <el-input type="number" v-model="scope.row.nowPrice">
+          <el-input type="number" @focus="handlePriceFocus(scope.$index)" @blur="handlePriceBlur(scope.$index)"
+                    :ref="'priceInputRef'+scope.$index" @keydown.native.up.prevent
+                    @keydown.native.down.prevent v-model="scope.row.nowPrice">
           </el-input>
         </template>
       </el-table-column>
@@ -89,33 +97,60 @@
         </el-table>
       </div>
     </el-dialog>
-    <el-dialog title="选择会员" :visible.sync="memberDialogVisible">
+    <el-dialog title="选择会员" class="dialog-table" width="40%" :modal="false" :visible.sync="memberDialogVisible">
       <div style="padding-top: 0px">
         <el-table :data="memberData"
-                  max-height="300"
-                  :show-header="false">
+                  :row-style="{height: 40 +'px',background:'#2E2E2E',color:'#CCCCCC'}"
+                  :cell-style="dialogTableRow"
+                  :header-cell-style="{background:'#2E2E2E',color:'#CCCCCC'}"
+                  max-height="300">
           <el-table-column
               prop="id"
               label="会员号"
-              width="200">
+              width="100">
           </el-table-column>
           <el-table-column
               prop="name"
               label="姓名"
-              width="200">
+              width="150">
           </el-table-column>
           <el-table-column
               prop="phone"
               label="电话"
-              width="100">
+              width="150">
           </el-table-column>
           <el-table-column
               prop="point"
               label="积分"
               width="100">
           </el-table-column>
+          <el-table-column
+              label="操作"
+              width="124">
+            <template slot-scope="scope">
+              <el-button @click="addMember(scope.$index)" type="text" size="small">添加</el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
+    </el-dialog>
+    <el-dialog class="dialog-table" width="40%" :visible.sync="cashDialogVisible">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item style="margin: 0px;" label="金 额（元）：">
+          <el-input style="width: 500px" :disabled="true" v-model="form.totalPrice"></el-input>
+        </el-form-item>
+        <el-form-item style="margin-top: 20px;" label="实 收（元）：" prop="realPayment">
+          <el-input style="width: 500px" v-model="form.realPayment"></el-input>
+        </el-form-item>
+        <el-form-item align="center">
+          <el-button-group>
+            <el-button :style="{ backgroundColor: cashButtonColor,color:'white' }"
+                       @click="sellCommodities(0)">现金支付</el-button>
+            <el-button :style="{ backgroundColor: mobileButtonColor,color:'white' }"
+                       @click="sellCommodities(1)">移动支付</el-button>
+          </el-button-group>
+        </el-form-item>
+      </el-form>
     </el-dialog>
   </el-main>
   <el-footer>
@@ -143,7 +178,7 @@
         <el-button size="medium" >取 单</el-button>
         <el-button size="medium" >挂 单</el-button>
         <el-button size="medium" >删 除</el-button>
-        <el-button size="medium" style="background-color: #F56C6C;color: white">收 款</el-button>
+        <el-button size="medium" style="background-color: #F56C6C;color: white" @click="clickPayButton">收款: {{form.totalPrice}} 元</el-button>
       </div>
     </div>
   </el-footer>
@@ -152,21 +187,39 @@
 <script>
 import {getCommoditiesByKeyword} from '@api/commodity'
 import {getSupIdById} from '@api/user'
-import {getMembers} from '@api/member'
+import {getMembers, updateMember} from '@api/member'
+import {sellCommodities} from '@api/record'
 import store from '../../../../store'
 export default {
   data () {
+    var validateDouble = (rule, value, callback) => {
+      // this.$message.success(/^\d+(\.\d+)?$/.test(value))
+      if (value !== '' && !/^\d+(\.\d+)?$/.test(value)) {
+        callback(new Error('请输入正确的金额'))
+      } else {
+        callback()
+      }
+    }
     return {
       id: '',
-      currentRow: -1,
+      currentRow: -1, // 光标指向的一行
       commodityDialogVisible: false,
       memberDialogVisible: false,
+      cashDialogVisible: false,
       isCommodityFocused: false,
       isMemberFocused: false,
-      rowSize: 0,
+      closeCashDialog: false, // 用于收款后判断能不能按下空格关闭收款对话框
+      rowSize: 0, // 商品行数
       inputMode: 0,
-      commodityNum: 0,
+      commodityNum: 0, // 商品件数
+      cashButtonColor: '#F56C6C',
+      mobileButtonColor: '#37373D',
+      record: {
+        method: 0, // 支付方式
+        type: 0// 类型，比如是否是挂单
+      },
       member: {
+        id: '',
         name: '',
         point: ''
       },
@@ -175,15 +228,92 @@ export default {
         barcode: '',
         phone: ''
       },
+      form: {
+        totalPrice: 0, // 总金额
+        realPayment: 0 // 实收金额
+      },
+      lastNum: 0, // 用于记录商品数量更改前的有效值
+      lastPrice: 0, // 用于记录商品上一个现价的有效值
       tableHeight: window.innerHeight - 160,
       tableData: [], // 主页面表格数据
       commodityData: [], // 选中的商品数据
       dialogTableData: [], // dialog表格的商品数据
       memberData: [],
-      placeholderData: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+      placeholderData: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
+      rules: {
+        realPayment: [{validator: validateDouble, message: '请输入实收金额', trigger: 'blur'}]
+      }
     }
   },
   methods: {
+    sellCommodities (m) {
+      // this.$message.success(/^\d+(\.\d+)?$/.test(this.realPayment))
+      this.$refs.form.validate((valid) => {
+        if (valid) { // 实收金额检验成功
+          let query = {}
+          this.tableData[0]['sum'] -= this.form.totalPrice - this.form.realPayment
+          query.data = this.tableData
+          query.method = m
+          query.type = this.record.type
+          query.workerId = this.id
+          query.memId = this.member.id
+          query.rowSize = this.rowSize
+          sellCommodities(query).then(res => {
+            if (res.data) {
+              this.closeCashDialog = true
+            } else {
+              this.$message.error('收银失败')
+            }
+          })
+          if (this.member.id !== '') {
+            this.member.point += this.form.realPayment
+            let member = this.member
+            member.supId = this.query.supId
+            updateMember(member).then(res => {
+              if (!res.status) {
+                this.$message.error(res.message)
+              }
+            })
+          }
+        }
+      })
+    },
+    clickPayButton () {
+      if (this.form.totalPrice > 0) {
+        this.form.realPayment = this.form.totalPrice
+        this.cashDialogVisible = true
+      }
+    },
+    handlePriceFocus (index) {
+      this.lastPrice = this.tableData[index]['nowPrice']
+    },
+    handlePriceBlur (index) {
+      if (this.tableData[index]['nowPrice'] <= 0 || this.lastPrice === undefined) { // 如果输入的现价小于0，改回原来的有效值
+        this.tableData[index]['nowPrice'] = this.lastPrice
+      } else { // 否则数量修改为新值，并重新计算小计与总价
+        this.form.totalPrice -= this.tableData[index]['sum']
+        this.tableData[index]['sum'] = this.tableData[index]['num'] * this.tableData[index]['nowPrice']
+        this.form.totalPrice += this.tableData[index]['sum']
+      }
+    },
+    handleNumFocus (index) {
+      this.lastNum = this.tableData[index]['num']
+    },
+    handleNumBlur (index) {
+      if (this.tableData[index]['num'] <= 0 || this.lastNum === undefined) { // 如果输入的数量小于0，改回原来的有效值
+        this.tableData[index]['num'] = this.lastNum
+      } else { // 否则数量修改为新值，并重新计算小计与总价
+        this.form.totalPrice -= this.tableData[index]['sum']
+        this.tableData[index]['sum'] = this.tableData[index]['num'] * this.tableData[index]['nowPrice']
+        this.form.totalPrice += this.tableData[index]['sum']
+      }
+    },
+    addMember (index) {
+      this.member.id = this.memberData[index]['id']
+      this.member.name = this.memberData[index]['name']
+      this.member.point = this.memberData[index]['point']
+      this.memberDialogVisible = false
+    },
     addCommodity (index) {
       this.commodityNum++
       for (let i = 0; i < this.commodityData.length; i++) {
@@ -191,17 +321,21 @@ export default {
         if (this.commodityData[i]['barcode'] === this.dialogTableData[index].barcode) {
           this.commodityData[i].num += 1
           this.commodityData[i].sum += this.commodityData[i].nowPrice
+          this.form.totalPrice += this.commodityData[i].nowPrice
           this.query.barcode = ''
           return
         }
       }
+      // 如果commodityData中没有此商品
       let commodity = {}
+      commodity.id = this.dialogTableData[index].id
       commodity.barcode = this.dialogTableData[index].barcode
       commodity.name = this.dialogTableData[index].name
       commodity.price = this.dialogTableData[index].price
       commodity.nowPrice = this.dialogTableData[index].price
       commodity.num = 1
       commodity.sum = this.dialogTableData[index].price
+      this.form.totalPrice += commodity.price
       this.commodityData.push(commodity)
       this.rowSize++
       this.currentRow++
@@ -220,6 +354,7 @@ export default {
       if (this.query.phone === '') return
       getMembers(this.query).then(res => {
         if (res.data.length === 1) {
+          this.member.id = res.data[0].id
           this.member.name = res.data[0].name
           this.member.point = res.data[0].point
         } else if (res.data.length > 1) {
@@ -240,18 +375,21 @@ export default {
               if (this.commodityData[i]['barcode'] === res.data[0].barcode) {
                 this.commodityData[i].num += 1
                 this.commodityData[i].sum += this.commodityData[i].nowPrice
+                this.form.totalPrice += this.commodityData[i].nowPrice
                 this.query.barcode = ''
                 return
               }
             }
             // commodityData中没有此商品，插入到commodityData中
             let commodity = {}
+            commodity.id = res.data[0].id
             commodity.barcode = res.data[0].barcode
             commodity.name = res.data[0].name
             commodity.price = res.data[0].price
             commodity.nowPrice = res.data[0].price
             commodity.num = 1
             commodity.sum = res.data[0].price
+            this.form.totalPrice += commodity.price
             this.commodityData.push(commodity)
             this.rowSize++
             this.currentRow++
@@ -280,9 +418,9 @@ export default {
       }
     },
     /* 页面按键功能定义如下：
-  * F1, F2, F3对应header部分从左往右3个按钮
+  * ctrl+F1/F2/F3对应header部分从左往右3个按钮
   * esc退出登录
-  * shift用于切换输入框
+  * shift用于切换输入框和收款方式
   * ctrl+a删除商品
   * ctrl+m清空会员信息
   * ctrl+b取单
@@ -299,10 +437,17 @@ export default {
           this.getMembers()
         }
       } else if (e.key === 'Shift') {
-        if (this.isCommodityFocused || this.isMemberFocused) { // 如果两个输入框有一个聚焦，切换输入框
-          this.inputMode = this.inputMode === 0 ? 1 : 0
+        if (this.cashDialogVisible) { // 如果打开了收银对话框，切换收银方式
+          let color = this.cashButtonColor
+          this.cashButtonColor = this.mobileButtonColor
+          this.mobileButtonColor = color
+          this.record.method = this.record.method === 0 ? 1 : 0
+        } else {
+          if (this.isCommodityFocused || this.isMemberFocused) { // 如果两个输入框有一个聚焦，切换输入框
+            this.inputMode = this.inputMode === 0 ? 1 : 0
+          }
+          this.setFocus()
         }
-        this.setFocus()
       } else if (e.ctrlKey && e.key === 'm') {
         this.member.name = ''
         this.member.point = ''
@@ -313,9 +458,55 @@ export default {
         this.currentRow--
         this.rowSize--
         this.commodityNum -= n
+      } else if (e.ctrlKey && e.key === 'ArrowUp') {
+        if (this.currentRow >= 0) {
+          this.$refs['numInputRef' + this.currentRow].focus()
+          this.tableData[this.currentRow]['num']++
+        }
+      } else if (e.ctrlKey && e.key === 'ArrowDown') {
+        if (this.currentRow >= 0) {
+          this.$refs['numInputRef' + this.currentRow].focus()
+          let n = this.tableData[this.currentRow]['num']
+          this.tableData[this.currentRow]['num'] = n - 1 > 0 ? n - 1 : n
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (this.currentRow >= 0) {
+          this.$refs['numInputRef' + this.currentRow].blur()
+          this.$refs['priceInputRef' + this.currentRow].blur()
+          this.currentRow = this.max(0, this.currentRow - 1)
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (this.currentRow >= 0) {
+          this.$refs['numInputRef' + this.currentRow].blur()
+          this.$refs['priceInputRef' + this.currentRow].blur()
+          this.currentRow = this.currentRow + 1 < this.rowSize ? this.currentRow + 1 : this.currentRow
+        }
+      } else if (e.key === ' ') {
+        if (this.cashDialogVisible) { // 打开了收款对话框
+          if (this.closeCashDialog) { // 如果已经能够关掉对话框
+            this.tableData = this.placeholderData
+            this.commodityData = []
+            this.rowSize = 0
+            this.currentRow = -1
+            this.commodityNum = 0
+            this.member.id = ''
+            this.member.name = ''
+            this.member.point = ''
+            this.cashDialogVisible = false
+            this.closeCashDialog = false
+            this.record.method = 0
+          } else {
+            this.sellCommodities(this.record.method)
+          }
+        } else { // 没打开收银对话框
+          this.clickPayButton()
+        }
       }
     },
-    setFocus () { // 聚焦到一个输入框
+    /**
+     * 聚焦到一个输入框
+     */
+    setFocus () {
       if (this.inputMode === 0) { // inputMode为0时聚焦到商品输入框
         this.$refs.keywordInput.focus()
       } else if (this.inputMode === 1) {
@@ -378,5 +569,7 @@ export default {
 /deep/ .dialog-table .el-dialog__body  {
   background-color: #2E2E2E
 }
-
+/deep/ .el-form-item__label {
+  color: #CCCCCC; /* 设置你想要的颜色 */
+}
 </style>
