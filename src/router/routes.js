@@ -31,6 +31,12 @@ const mainPage = [
         import(/* webpackChunkName: "Main" */ '../pages/main/routes/cashier/Cashier.vue')
   },
   {
+    path: '/records',
+    name: 'records',
+    component: () =>
+        import(/* webpackChunkName: "Main" */ '../pages/main/routes/cashier/Records.vue')
+  },
+  {
     // 父级
     path: '/main',
     name: 'main',

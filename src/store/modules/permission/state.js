@@ -6,7 +6,8 @@ export default {
       main: ['*']
     },
     2: {
-      cashier: ['*']
+      cashier: ['*'],
+      records: ['*']
     }
   }
 }
