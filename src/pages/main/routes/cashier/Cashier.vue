@@ -1,8 +1,8 @@
 <template>
 <el-container style="background-color: #1F1F1F">
   <el-header style="background-color: #1F1F1F">
-    <el-button icon="el-icon-plus" class="navi-button">新增会员</el-button>
-    <el-button icon="el-icon-s-order" class="navi-button">销售单据</el-button>
+    <el-button icon="el-icon-plus" class="navi-button" @click="addMemberVisible = true">新增会员</el-button>
+    <el-button icon="el-icon-s-order" class="navi-button" @click="toRecords">销售单据</el-button>
     <el-button icon="el-icon-s-finance" class="navi-button">退货</el-button>
     <el-button icon="el-icon-switch-button" class="navi-button" @click="quit">退出登录</el-button>
   </el-header>
@@ -152,6 +152,26 @@
         </el-form-item>
       </el-form>
     </el-dialog>
+    <el-dialog title="新增会员" class="dialog-table" width="40%" :visible.sync="addMemberVisible">
+      <el-form :model="memberForm" :rules="memberRules" ref="memberForm">
+          <el-form-item prop="name" label="姓名：">
+            <el-input v-model="memberForm.name" style="width: 500px">
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="phone" label="电话：">
+            <el-input v-model="memberForm.phone" style="width: 500px">
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="point" label=" 积分：" style="padding-left: 10px">
+            <el-input v-model="memberForm.point" style="width: 500px">
+            </el-input>
+          </el-form-item>
+        <div class="space-container">
+          <el-button style="margin-left: 65px;width: 100px" @click="addMemberVisible = false">取消</el-button>
+          <el-button style="margin-right: 60px;width: 100px" type="primary" @click="saveMember">保存</el-button>
+        </div>
+      </el-form>
+    </el-dialog>
   </el-main>
   <el-footer>
     <div class="space-container">
@@ -177,7 +197,7 @@
       <div>
         <el-button size="medium" >取 单</el-button>
         <el-button size="medium" >挂 单</el-button>
-        <el-button size="medium" >删 除</el-button>
+        <el-button size="medium" type="primary" @click="deleteRow">删 除</el-button>
         <el-button size="medium" style="background-color: #F56C6C;color: white" @click="clickPayButton">收款: {{form.totalPrice}} 元</el-button>
       </div>
     </div>
@@ -187,11 +207,20 @@
 <script>
 import {getCommoditiesByKeyword} from '@api/commodity'
 import {getSupIdById} from '@api/user'
-import {getMembers, updateMember} from '@api/member'
+import {getMembers, updateMember, createMember} from '@api/member'
 import {sellCommodities} from '@api/record'
 import store from '../../../../store'
 export default {
   data () {
+    var validatePhoneNumber = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入电话号码'))
+      } else if (!/^\d{11}$/.test(value)) {
+        callback(new Error('请输入正确电话号码'))
+      } else {
+        callback()
+      }
+    }
     var validateDouble = (rule, value, callback) => {
       // this.$message.success(/^\d+(\.\d+)?$/.test(value))
       if (value !== '' && !/^\d+(\.\d+)?$/.test(value)) {
@@ -209,6 +238,7 @@ export default {
       isCommodityFocused: false,
       isMemberFocused: false,
       closeCashDialog: false, // 用于收款后判断能不能按下空格关闭收款对话框
+      addMemberVisible: false,
       rowSize: 0, // 商品行数
       inputMode: 0,
       commodityNum: 0, // 商品件数
@@ -221,7 +251,8 @@ export default {
       member: {
         id: '',
         name: '',
-        point: ''
+        point: '',
+        phone: ''
       },
       query: {
         supId: '',
@@ -231,6 +262,14 @@ export default {
       form: {
         totalPrice: 0, // 总金额
         realPayment: 0 // 实收金额
+      },
+      memberForm: {
+        id: '',
+        phone: '',
+        name: '',
+        point: '',
+        supId: '',
+        createTime: ''
       },
       lastNum: 0, // 用于记录商品数量更改前的有效值
       lastPrice: 0, // 用于记录商品上一个现价的有效值
@@ -242,15 +281,40 @@ export default {
       placeholderData: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
       rules: {
         realPayment: [{validator: validateDouble, message: '请输入实收金额', trigger: 'blur'}]
+      },
+      memberRules: {
+        name: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
+        phone: [{ required: true, message: '电话不能为空', trigger: 'blur' },
+          {validator: validatePhoneNumber, message: '请输入正确电话号码', trigger: 'blur'}],
+        point: [{validator: validateDouble, message: '请输入正确的积分', trigger: 'blur'}]
       }
     }
   },
   methods: {
+    toRecords () {
+      this.$router.push({path: '/records'})
+    },
+    saveMember () {
+      this.$refs.memberForm.validate((valid) => {
+        if (valid) {
+          this.memberForm.supId = this.query.supId
+          createMember(this.memberForm).then(res => {
+            if (res.status) {
+              this.$message.success(res.message)
+              this.addMemberVisible = false
+            } else {
+              this.$message.error(res.message)
+            }
+          })
+        }
+      })
+    },
     sellCommodities (m) {
       // this.$message.success(/^\d+(\.\d+)?$/.test(this.realPayment))
       this.$refs.form.validate((valid) => {
         if (valid) { // 实收金额检验成功
           let query = {}
+          // 把最后的实收金额与应付金额差值放在第一个商品的payment中
           this.tableData[0]['sum'] -= this.form.totalPrice - this.form.realPayment
           query.data = this.tableData
           query.method = m
@@ -269,6 +333,7 @@ export default {
             this.member.point += this.form.realPayment
             let member = this.member
             member.supId = this.query.supId
+            console.info(member)
             updateMember(member).then(res => {
               if (!res.status) {
                 this.$message.error(res.message)
@@ -284,6 +349,7 @@ export default {
         this.cashDialogVisible = true
       }
     },
+    // 表格中的价钱输入框
     handlePriceFocus (index) {
       this.lastPrice = this.tableData[index]['nowPrice']
     },
@@ -293,9 +359,13 @@ export default {
       } else { // 否则数量修改为新值，并重新计算小计与总价
         this.form.totalPrice -= this.tableData[index]['sum']
         this.tableData[index]['sum'] = this.tableData[index]['num'] * this.tableData[index]['nowPrice']
+        // 同时还要修改commodityData中的数据
+        this.commodityData[index]['nowPrice'] = this.tableData[index]['nowPrice']
+        this.commodityData[index]['sum'] = this.tableData[index]['sum']
         this.form.totalPrice += this.tableData[index]['sum']
       }
     },
+    // 表格中的数量输入框
     handleNumFocus (index) {
       this.lastNum = this.tableData[index]['num']
     },
@@ -305,6 +375,9 @@ export default {
       } else { // 否则数量修改为新值，并重新计算小计与总价
         this.form.totalPrice -= this.tableData[index]['sum']
         this.tableData[index]['sum'] = this.tableData[index]['num'] * this.tableData[index]['nowPrice']
+        // 同时还要修改commodityData中的数据
+        this.commodityData[index]['num'] = this.tableData[index]['num']
+        this.commodityData[index]['sum'] = this.tableData[index]['sum']
         this.form.totalPrice += this.tableData[index]['sum']
       }
     },
@@ -312,6 +385,7 @@ export default {
       this.member.id = this.memberData[index]['id']
       this.member.name = this.memberData[index]['name']
       this.member.point = this.memberData[index]['point']
+      this.member.phone = this.memberData[index]['phone']
       this.memberDialogVisible = false
     },
     addCommodity (index) {
@@ -357,6 +431,7 @@ export default {
           this.member.id = res.data[0].id
           this.member.name = res.data[0].name
           this.member.point = res.data[0].point
+          this.member.phone = res.data[0].phone
         } else if (res.data.length > 1) {
           this.memberData = res.data
           this.memberDialogVisible = true
@@ -417,6 +492,17 @@ export default {
         return index + 1
       }
     },
+    deleteRow () {
+      if (this.currentRow >= 0) {
+        let n = this.tableData[this.currentRow]['num']
+        this.form.totalPrice -= this.tableData[this.currentRow]['sum']
+        this.commodityData.splice(this.currentRow, 1)
+        this.tableData = this.commodityData.concat(this.placeholderData.slice(0, this.max(18 - this.rowSize, 0)))
+        this.currentRow--
+        this.rowSize--
+        this.commodityNum -= n
+      }
+    },
     /* 页面按键功能定义如下：
   * ctrl+F1/F2/F3对应header部分从左往右3个按钮
   * esc退出登录
@@ -431,6 +517,10 @@ export default {
   * */
     handlePressKey (e) {
       if (e.key === 'Enter') {
+        if (this.addMemberVisible) { // 如果在新增会员界面
+          this.saveMember()
+          return
+        }
         if (this.inputMode === 0) { // 如果聚焦在商品输入框上
           this.getCommodities()
         } else {
@@ -448,26 +538,27 @@ export default {
           }
           this.setFocus()
         }
+      } else if (e.ctrlKey && e.key === 'F1') {
+        this.addMemberVisible = true
+      } else if (e.ctrlKey && e.key === 'F2') {
+        this.toRecords()
       } else if (e.ctrlKey && e.key === 'm') {
         this.member.name = ''
         this.member.point = ''
       } else if (e.ctrlKey && e.key === 'a') {
-        let n = this.tableData[this.currentRow]['num']
-        this.commodityData.splice(this.currentRow, 1)
-        this.tableData = this.commodityData.concat(this.placeholderData.slice(0, this.max(18 - this.rowSize, 0)))
-        this.currentRow--
-        this.rowSize--
-        this.commodityNum -= n
+        this.deleteRow()
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         if (this.currentRow >= 0) {
           this.$refs['numInputRef' + this.currentRow].focus()
           this.tableData[this.currentRow]['num']++
+          this.commodityData[this.currentRow]['num'] = this.tableData[this.currentRow]['num']
         }
       } else if (e.ctrlKey && e.key === 'ArrowDown') {
         if (this.currentRow >= 0) {
           this.$refs['numInputRef' + this.currentRow].focus()
           let n = this.tableData[this.currentRow]['num']
           this.tableData[this.currentRow]['num'] = n - 1 > 0 ? n - 1 : n
+          this.commodityData[this.currentRow]['num'] = this.tableData[this.currentRow]['num']
         }
       } else if (e.key === 'ArrowUp') {
         if (this.currentRow >= 0) {
@@ -492,9 +583,11 @@ export default {
             this.member.id = ''
             this.member.name = ''
             this.member.point = ''
+            this.member.phone = ''
             this.cashDialogVisible = false
             this.closeCashDialog = false
             this.record.method = 0
+            this.form.totalPrice = 0
           } else {
             this.sellCommodities(this.record.method)
           }
