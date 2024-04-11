@@ -3,7 +3,8 @@
   <el-header style="background-color: #1F1F1F">
     <el-button icon="el-icon-plus" class="navi-button" @click="addMemberVisible = true">新增会员</el-button>
     <el-button icon="el-icon-s-order" class="navi-button" @click="toRecords">销售单据</el-button>
-    <el-button icon="el-icon-s-finance" class="navi-button">退货</el-button>
+    <el-button v-show="!isRefund" icon="el-icon-s-finance" class="navi-button" @click="isRefund=true">退货</el-button>
+    <el-button v-show="isRefund" icon="el-icon-shopping-cart-1" class="navi-button" @click="isRefund=false">收款</el-button>
     <el-button icon="el-icon-switch-button" class="navi-button" @click="quit">退出登录</el-button>
   </el-header>
   <el-main>
@@ -152,6 +153,23 @@
         </el-form-item>
       </el-form>
     </el-dialog>
+    <el-dialog class="dialog-table" width="30%" :visible.sync="refundDialogVisible">
+      <el-form>
+        <el-form-item style="margin-left: 20px">
+          <span style="color: #CCCCCC;font-size: 20px">会员姓名：{{member.name}}</span>
+        </el-form-item>
+        <el-form-item style="margin-left: 20px">
+          <span style="color: #CCCCCC;font-size: 20px">退款金额：{{form.totalPrice}} 元</span>
+        </el-form-item>
+        <el-form-item >
+          <div class="space-container">
+            <el-button type="info" style="width: 100px;margin-top: 20px;margin-left: 50px"
+                       @click="refundDialogVisible=false">取 消</el-button>
+            <el-button type="success" style="width: 100px;margin-top: 20px;margin-right: 50px" @click="refundCommodities">退 款</el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
     <el-dialog title="新增会员" class="dialog-table" width="40%" :visible.sync="addMemberVisible">
       <el-form :model="memberForm" :rules="memberRules" ref="memberForm">
           <el-form-item prop="name" label="姓名：">
@@ -171,6 +189,45 @@
           <el-button style="margin-right: 60px;width: 100px" type="primary" @click="saveMember">保存</el-button>
         </div>
       </el-form>
+    </el-dialog>
+    <el-dialog title="选择挂单" class="dialog-table" width="40%" :visible.sync="pendedRecordVisible">
+      <el-table
+          :data="pendedRecordData"
+          :row-style="{height: 40 +'px',background:'#2B2D30',color:'#CCCCCC'}"
+          :cell-style="tableRow"
+          :header-cell-style="{background:'#2B2D30',color:'#CCCCCC'}"
+          :highlight-selection-row="false"
+          style="background-color: #2B2D30">
+        <el-table-column
+            type="index"
+            label="序号"
+            width="50">
+        </el-table-column>
+        <el-table-column
+            prop="payment"
+            label="金额（元）"
+            width="135">
+        </el-table-column>
+        <el-table-column
+            prop="number"
+            label="商品件数"
+            width="135">
+        </el-table-column>
+        <el-table-column
+            prop="createTime"
+            :formatter="formatTime"
+            label="时间"
+            width="200">
+        </el-table-column>
+        <el-table-column
+            label="操作"
+            width="100">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" >取单</el-button>
+            <el-button type="text" size="small" >删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </el-dialog>
   </el-main>
   <el-footer>
@@ -195,10 +252,11 @@
         </el-form>
       </div>
       <div>
-        <el-button size="medium" >取 单</el-button>
-        <el-button size="medium" >挂 单</el-button>
+        <el-button v-show="!isRefund" type="primary" size="medium" @click="clickGetPendedButton">取 单</el-button>
+        <el-button v-show="!isRefund" type="primary" size="medium" @click="pendOrder">挂 单</el-button>
         <el-button size="medium" type="primary" @click="deleteRow">删 除</el-button>
-        <el-button size="medium" style="background-color: #F56C6C;color: white" @click="clickPayButton">收款: {{form.totalPrice}} 元</el-button>
+        <el-button v-show="!isRefund" size="medium" style="background-color: #F56C6C;color: white" @click="clickPayButton">收款: {{form.totalPrice}} 元</el-button>
+        <el-button v-show="isRefund" size="medium" type="success" @click="clickRefundButton">退款: {{form.totalPrice}} 元</el-button>
       </div>
     </div>
   </el-footer>
@@ -208,7 +266,7 @@
 import {getCommoditiesByKeyword} from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getMembers, updateMember, createMember} from '@api/member'
-import {sellCommodities} from '@api/record'
+import {createRecords, getPendedRecords} from '@api/record'
 import store from '../../../../store'
 export default {
   data () {
@@ -239,6 +297,9 @@ export default {
       isMemberFocused: false,
       closeCashDialog: false, // 用于收款后判断能不能按下空格关闭收款对话框
       addMemberVisible: false,
+      isRefund: false, // 是否为退款模式
+      refundDialogVisible: false,
+      pendedRecordVisible: false,
       rowSize: 0, // 商品行数
       inputMode: 0,
       commodityNum: 0, // 商品件数
@@ -278,6 +339,7 @@ export default {
       commodityData: [], // 选中的商品数据
       dialogTableData: [], // dialog表格的商品数据
       memberData: [],
+      pendedRecordData: [],
       placeholderData: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
       rules: {
         realPayment: [{validator: validateDouble, message: '请输入实收金额', trigger: 'blur'}]
@@ -291,6 +353,20 @@ export default {
     }
   },
   methods: {
+    clickGetPendedButton () {
+      this.pendedRecordVisible = true
+      this.getPendedRecords()
+    },
+    formatTime (row) {
+      const date = new Date(row.createTime)
+      return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' +
+          date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds()
+    },
+    getPendedRecords () {
+      getPendedRecords(this.query).then(res => {
+        this.pendedRecordData = res.data
+      })
+    },
     toRecords () {
       this.$router.push({path: '/records'})
     },
@@ -309,6 +385,50 @@ export default {
         }
       })
     },
+    pendOrder () { // 挂单
+      if (this.form.totalPrice > 0) {
+        let query = {}
+        query.data = this.tableData
+        query.method = 0
+        query.type = 2
+        query.workerId = this.id
+        query.rowSize = this.rowSize
+        createRecords(query).then(res => {
+          if (res.data) {
+            this.closeCashDialog = true
+          } else {
+            this.$message.error('挂单失败')
+          }
+        })
+        this.resetData()
+      }
+    },
+    refundCommodities () {
+      let query = {}
+      query.data = this.tableData
+      query.method = 0
+      query.type = 1
+      query.workerId = this.id
+      query.memId = this.member.id
+      query.rowSize = this.rowSize
+      createRecords(query).then(res => {
+        if (res.data) {
+          this.closeCashDialog = true
+        } else {
+          this.$message.error('退款失败')
+        }
+      })
+      if (this.member.id !== '') {
+        this.member.point -= this.form.totalPrice
+        let member = this.member
+        member.supId = this.query.supId
+        updateMember(member).then(res => {
+          if (!res.status) {
+            this.$message.error(res.message)
+          }
+        })
+      }
+    },
     sellCommodities (m) {
       // this.$message.success(/^\d+(\.\d+)?$/.test(this.realPayment))
       this.$refs.form.validate((valid) => {
@@ -318,11 +438,11 @@ export default {
           this.tableData[0]['sum'] -= this.form.totalPrice - this.form.realPayment
           query.data = this.tableData
           query.method = m
-          query.type = this.record.type
+          query.type = 0
           query.workerId = this.id
           query.memId = this.member.id
           query.rowSize = this.rowSize
-          sellCommodities(query).then(res => {
+          createRecords(query).then(res => {
             if (res.data) {
               this.closeCashDialog = true
             } else {
@@ -333,7 +453,6 @@ export default {
             this.member.point += this.form.realPayment
             let member = this.member
             member.supId = this.query.supId
-            console.info(member)
             updateMember(member).then(res => {
               if (!res.status) {
                 this.$message.error(res.message)
@@ -342,6 +461,11 @@ export default {
           }
         }
       })
+    },
+    clickRefundButton () {
+      if (this.form.totalPrice > 0) {
+        this.refundDialogVisible = true
+      }
     },
     clickPayButton () {
       if (this.form.totalPrice > 0) {
@@ -503,11 +627,25 @@ export default {
         this.commodityNum -= n
       }
     },
+    resetData () {
+      this.tableData = this.placeholderData
+      this.commodityData = []
+      this.rowSize = 0
+      this.currentRow = -1
+      this.commodityNum = 0
+      this.member.id = ''
+      this.member.name = ''
+      this.member.point = ''
+      this.member.phone = ''
+      this.closeCashDialog = false
+      this.record.method = 0
+      this.form.totalPrice = 0
+    },
     /* 页面按键功能定义如下：
   * ctrl+F1/F2/F3对应header部分从左往右3个按钮
   * esc退出登录
   * shift用于切换输入框和收款方式
-  * ctrl+a删除商品
+  * ctrl+i删除商品
   * ctrl+m清空会员信息
   * ctrl+b取单
   * ctrl+c挂单
@@ -542,11 +680,15 @@ export default {
         this.addMemberVisible = true
       } else if (e.ctrlKey && e.key === 'F2') {
         this.toRecords()
+      } else if (e.ctrlKey && e.key === 'F3') {
+        this.isRefund = !this.isRefund
       } else if (e.ctrlKey && e.key === 'm') {
         this.member.name = ''
         this.member.point = ''
-      } else if (e.ctrlKey && e.key === 'a') {
+      } else if (e.ctrlKey && e.key === 'i') {
         this.deleteRow()
+      } else if (e.ctrlKey && e.key === 'c') {
+        this.pendOrder()
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         if (this.currentRow >= 0) {
           this.$refs['numInputRef' + this.currentRow].focus()
@@ -573,26 +715,28 @@ export default {
           this.currentRow = this.currentRow + 1 < this.rowSize ? this.currentRow + 1 : this.currentRow
         }
       } else if (e.key === ' ') {
-        if (this.cashDialogVisible) { // 打开了收款对话框
-          if (this.closeCashDialog) { // 如果已经能够关掉对话框
-            this.tableData = this.placeholderData
-            this.commodityData = []
-            this.rowSize = 0
-            this.currentRow = -1
-            this.commodityNum = 0
-            this.member.id = ''
-            this.member.name = ''
-            this.member.point = ''
-            this.member.phone = ''
-            this.cashDialogVisible = false
-            this.closeCashDialog = false
-            this.record.method = 0
-            this.form.totalPrice = 0
+        if (this.isRefund) { // 如果是退款模式
+          if (this.refundDialogVisible) { // 如果打开了退款对话框
+            if (this.closeCashDialog) {
+              this.resetData()
+              this.refundDialogVisible = false
+            } else {
+              this.refundCommodities()
+            }
           } else {
-            this.sellCommodities(this.record.method)
+            this.clickRefundButton()
           }
-        } else { // 没打开收银对话框
-          this.clickPayButton()
+        } else { // 收款模式
+          if (this.cashDialogVisible) { // 打开了收款对话框
+            if (this.closeCashDialog) { // 如果已经能够关掉对话框
+              this.resetData()
+              this.cashDialogVisible = false
+            } else {
+              this.sellCommodities(this.record.method)
+            }
+          } else { // 没打开收银对话框
+            this.clickPayButton()
+          }
         }
       }
     },
