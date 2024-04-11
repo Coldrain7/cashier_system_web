@@ -2,6 +2,8 @@
   <el-container style="background-color: #1F1F1F">
     <el-header style="background-color: #1F1F1F">
       <el-button icon="el-icon-d-arrow-left" class="navi-button" @click="back">返回</el-button>
+      <el-button v-show="!isRefund" icon="el-icon-sold-out" class="navi-button" @click="clickRefund">退款单据</el-button>
+      <el-button v-show="isRefund" icon="el-icon-sell" class="navi-button" @click="clickRefund">收款单据</el-button>
     </el-header>
     <el-main>
       <el-table
@@ -11,7 +13,8 @@
           :header-cell-style="{background:'#2B2D30',color:'#CCCCCC'}"
           :height="tableHeight"
           :highlight-selection-row="false"
-          style="background-color: #2B2D30">
+          style="background-color: #2B2D30"
+          v-show="!isRefund">
         <el-table-column
             type="index"
             :index="indexMethod"
@@ -39,6 +42,45 @@
             :formatter="formatTime"
             label="时间"
             width="319">
+        </el-table-column>
+        <el-table-column
+            label="操作"
+            width="200">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" @click="checkRecord(scope.$index)">查看</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-table
+          :data="tableData"
+          :row-style="{height: 40 +'px',background:'#2B2D30',color:'#CCCCCC'}"
+          :cell-style="tableRow"
+          :header-cell-style="{background:'#2B2D30',color:'#CCCCCC'}"
+          :height="tableHeight"
+          :highlight-selection-row="false"
+          style="background-color: #2B2D30"
+          v-show="isRefund">
+        <el-table-column
+            type="index"
+            :index="indexMethod"
+            label="序号"
+            width="200">
+        </el-table-column>
+        <el-table-column
+            prop="payment"
+            label="退款金额（元）"
+            width="400">
+        </el-table-column>
+        <el-table-column
+            prop="member.name"
+            label="会员姓名"
+            width="400">
+        </el-table-column>
+        <el-table-column
+            prop="createTime"
+            :formatter="formatTime"
+            label="时间"
+            width="419">
         </el-table-column>
         <el-table-column
             label="操作"
@@ -77,7 +119,7 @@
                 width="70">
             </el-table-column>
             <el-table-column
-                prop="price"
+                prop="commodity.price"
                 label="单价（元）"
                 width="100">
             </el-table-column>
@@ -112,8 +154,10 @@ export default {
     return {
       tableHeight: window.innerHeight - 160,
       recordDialogVisible: false,
+      isRefund: false,
       query: {
         workerId: 0,
+        type: 0,
         pageNo: 1,
         pageSize: 20
       },
@@ -127,11 +171,16 @@ export default {
     }
   },
   methods: {
+    clickRefund () {
+      this.isRefund = !this.isRefund
+      this.getRecordsWithMember()
+    },
     checkRecord (index) {
       this.title.totalPrice = this.tableData[index]['payment']
       this.title.name = this.tableData[index]['member']['name'] === null ? ' ' : this.tableData[index]['member']['name']
       let query = {}
       query.id = this.tableData[index]['id']
+      query.type = this.query.type
       getRecordWithCommodity(query).then(res => {
         this.dialogTableData = res.data
         this.recordDialogVisible = true
@@ -156,6 +205,7 @@ export default {
       }
     },
     getRecordsWithMember () {
+      this.query.type = this.isRefund ? 1 : 0
       getRecordsWithMember(this.query).then(res => {
         this.tableData = res.data.records
         this.total = res.data.total
@@ -180,6 +230,8 @@ export default {
     handlePressKey (e) {
       if (e.key === 'Escape') {
         this.back()
+      } else if (e.ctrlKey && e.key === 'F1') {
+        this.clickRefund()
       }
     }
   },
