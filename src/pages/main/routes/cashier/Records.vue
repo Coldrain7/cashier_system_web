@@ -48,7 +48,8 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-dialog :title="getTitle" class="dialog-table" width="40%" :visible.sync="recordDialogVisible">
+      <el-dialog :title="'总金额：' + this.title.totalPrice.toString() + '（元） 会员：' + this.title.name" class="dialog-table"
+                 width="50%" :visible.sync="recordDialogVisible">
         <div style="padding-top: 0px">
           <el-table :data="dialogTableData"
                     :row-style="{height: 40 +'px',background:'#2E2E2E',color:'#CCCCCC'}"
@@ -61,19 +62,19 @@
                 width="50">
             </el-table-column>
             <el-table-column
-                prop="barcode"
+                prop="commodity.barcode"
                 label="条码"
                 width="200">
             </el-table-column>
             <el-table-column
-                prop="name"
+                prop="commodity.name"
                 label="商品名称"
-                width="200">
+                width="270">
             </el-table-column>
             <el-table-column
                 prop="number"
                 label="数量"
-                width="200">
+                width="70">
             </el-table-column>
             <el-table-column
                 prop="price"
@@ -105,7 +106,7 @@
 </template>
 <script>
 import store from '../../../../store'
-import {getRecordsWithMember} from '@api/record'
+import {getRecordsWithMember, getRecordWithCommodity} from '@api/record'
 export default {
   data () {
     return {
@@ -128,11 +129,13 @@ export default {
   methods: {
     checkRecord (index) {
       this.title.totalPrice = this.tableData[index]['payment']
-      this.title.name = this.tableData[index]['member.name']
-      this.recordDialogVisible = true
-    },
-    getTitle () {
-      return '总金额（元）：' + this.title.totalPrice.toString() + ' 会员：' + this.title.name
+      this.title.name = this.tableData[index]['member']['name'] === null ? ' ' : this.tableData[index]['member']['name']
+      let query = {}
+      query.id = this.tableData[index]['id']
+      getRecordWithCommodity(query).then(res => {
+        this.dialogTableData = res.data
+        this.recordDialogVisible = true
+      })
     },
     dialogTableRow ({row, rowIndex}) {
       return 'background: #2E2E2E; padding: 0px;'
@@ -175,12 +178,18 @@ export default {
           date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds()
     },
     handlePressKey (e) {
-
+      if (e.key === 'Escape') {
+        this.back()
+      }
     }
   },
   created () {
     this.query.workerId = store.getters['user/getUserId']
     this.getRecordsWithMember()
+  },
+  beforeDestroy () {
+    // 在组件销毁前移除键盘事件监听器
+    window.removeEventListener('keydown', this.handlePressKey)
   },
   mounted () {
     document.addEventListener('keydown', this.handlePressKey)
