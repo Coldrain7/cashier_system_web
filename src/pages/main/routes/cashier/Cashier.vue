@@ -170,6 +170,31 @@
         </el-form-item>
       </el-form>
     </el-dialog>
+    <el-dialog :title="`订单金额： ${form.totalPrice}元`" class="dialog-table" width="30%" :visible.sync="usePointVisible">
+      <el-form>
+        <el-form-item>
+          <span style="color: #CCCCCC;font-size: 20px">会员姓名：{{member.name}}</span>
+          <span style="color: #CCCCCC;font-size: 20px;margin-left: 10px">积分：{{member.point}}</span>
+        </el-form-item>
+        <el-form-item prop="point" label="使用积分：">
+          <el-input @focus="usePointFocus" @blur="usePointBlur" v-model="usedPoint" style="width: 300px">
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="price">
+          <span style="color: #CCCCCC;font-size:18px">兑换金额（元）：
+            <span style="color: #ff4444;font-size:18px">
+            {{Math.round((this.lastPoint / this.pointRatio) * 100) / 100}}</span>
+          </span>
+        </el-form-item>
+        <el-form-item >
+          <div class="space-container">
+            <el-button type="info" style="width: 100px;margin-top: 20px;margin-left: 50px"
+                       @click="usePointVisible=false">取 消</el-button>
+            <el-button type="success" style="width: 100px;margin-top: 20px;margin-right: 50px" @click="exchangePoint">兑 换</el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
     <el-dialog title="新增会员" class="dialog-table" width="40%" :visible.sync="addMemberVisible">
       <el-form :model="memberForm" :rules="memberRules" ref="memberForm">
           <el-form-item prop="name" label="姓名：">
@@ -223,8 +248,8 @@
             label="操作"
             width="100">
           <template slot-scope="scope">
-            <el-button type="text" size="small" >取单</el-button>
-            <el-button type="text" size="small" >删除</el-button>
+            <el-button type="text" size="small" @click="getPendedCommodities(scope.$index)">取单</el-button>
+            <el-button type="text" size="small" @click="deletePendedRecord(scope.$index)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -255,6 +280,7 @@
         <el-button v-show="!isRefund" type="primary" size="medium" @click="clickGetPendedButton">取 单</el-button>
         <el-button v-show="!isRefund" type="primary" size="medium" @click="pendOrder">挂 单</el-button>
         <el-button size="medium" type="primary" @click="deleteRow">删 除</el-button>
+        <el-button v-show="!isRefund" size="medium" type="success" :disabled="member.id<=0" @click="clickUsePointButton">使用积分</el-button>
         <el-button v-show="!isRefund" size="medium" style="background-color: #F56C6C;color: white" @click="clickPayButton">收款: {{form.totalPrice}} 元</el-button>
         <el-button v-show="isRefund" size="medium" type="success" @click="clickRefundButton">退款: {{form.totalPrice}} 元</el-button>
       </div>
@@ -266,7 +292,8 @@
 import {getCommoditiesByKeyword} from '@api/commodity'
 import {getSupIdById} from '@api/user'
 import {getMembers, updateMember, createMember} from '@api/member'
-import {createRecords, getPendedRecords} from '@api/record'
+import {createRecords, getPendedRecords, getPendedCommodities, deleteRecordById} from '@api/record'
+import {getSupermarketById} from '@api/supermarket'
 import store from '../../../../store'
 export default {
   data () {
@@ -300,6 +327,7 @@ export default {
       isRefund: false, // 是否为退款模式
       refundDialogVisible: false,
       pendedRecordVisible: false,
+      usePointVisible: false,
       rowSize: 0, // 商品行数
       inputMode: 0,
       commodityNum: 0, // 商品件数
@@ -310,7 +338,7 @@ export default {
         type: 0// 类型，比如是否是挂单
       },
       member: {
-        id: '',
+        id: 0,
         name: '',
         point: '',
         phone: ''
@@ -334,6 +362,9 @@ export default {
       },
       lastNum: 0, // 用于记录商品数量更改前的有效值
       lastPrice: 0, // 用于记录商品上一个现价的有效值
+      lastPoint: 0,
+      usedPoint: 0, // 记录使用的积分数
+      pointRatio: 100, // 记录积分兑换金额比率
       tableHeight: window.innerHeight - 160,
       tableData: [], // 主页面表格数据
       commodityData: [], // 选中的商品数据
@@ -353,6 +384,72 @@ export default {
     }
   },
   methods: {
+    exchangePoint () {
+      let money = Math.round((this.lastPoint / this.pointRatio) * 100) / 100
+      if (this.form.totalPrice >= money) {
+        this.member.point -= this.lastPoint
+        this.form.totalPrice -= Math.round((this.lastPoint / this.pointRatio) * 100) / 100
+        this.usePointVisible = false
+        this.lastPoint = 0
+        this.$message.success('兑换成功')
+      } else {
+        this.$message.error('兑换的金额过多')
+      }
+    },
+    usePointBlur () {
+      let regex = /^\d+(\.\d+)?$/
+      if (regex.test(this.usedPoint)) {
+        this.lastPoint = this.usedPoint <= this.member.point ? this.usedPoint : this.member.point
+      } else {
+        this.usedPoint = this.lastPoint
+      }
+    },
+    usePointFocus () {
+      this.lastPoint = this.usedPoint
+    },
+    clickUsePointButton () {
+      if (this.form.totalPrice > 0) {
+        this.usePointVisible = true
+      }
+    },
+    deletePendedRecord (index) {
+      let record = {}
+      record.id = this.pendedRecordData[index]['id']
+      deleteRecordById(record).then(res => {
+        if (res.data) {
+          this.$message.success('删除成功')
+          this.getPendedRecords()
+        } else {
+          this.$message.error('删除失败')
+        }
+      })
+    },
+    getPendedCommodities (index) {
+      let record = {}
+      record.id = this.pendedRecordData[index]['id']
+      getPendedCommodities(record).then(res => {
+        this.commodityData = res.data
+        this.rowSize = res.data.length
+        this.currentRow = this.rowSize - 1
+        let num = 0
+        let sum = 0
+        for (let i = 0; i < this.rowSize; i++) {
+          sum += this.commodityData[i]['sum']
+          num += this.commodityData[i]['num']
+          this.commodityData[i].nowPrice = Math.round((sum / num) * 100) / 100
+        }
+        this.commodityNum = num
+        this.form.totalPrice = sum
+        this.pendedRecordVisible = false
+        this.tableData = this.commodityData.concat(this.placeholderData.slice(0, this.max(18 - this.rowSize, 0)))
+        this.record.method = 0
+        return deleteRecordById(record)
+      }).then(res => {
+        if (!res.data) {
+          this.$message.error('删除挂单失败')
+        }
+      })
+    },
     clickGetPendedButton () {
       this.pendedRecordVisible = true
       this.getPendedRecords()
@@ -418,7 +515,7 @@ export default {
           this.$message.error('退款失败')
         }
       })
-      if (this.member.id !== '') {
+      if (this.member.id > 0) {
         this.member.point -= this.form.totalPrice
         let member = this.member
         member.supId = this.query.supId
@@ -449,7 +546,7 @@ export default {
               this.$message.error('收银失败')
             }
           })
-          if (this.member.id !== '') {
+          if (this.member.id > 0) {
             this.member.point += this.form.realPayment
             let member = this.member
             member.supId = this.query.supId
@@ -468,7 +565,7 @@ export default {
       }
     },
     clickPayButton () {
-      if (this.form.totalPrice > 0) {
+      if (this.rowSize > 0) {
         this.form.realPayment = this.form.totalPrice
         this.cashDialogVisible = true
       }
@@ -633,7 +730,7 @@ export default {
       this.rowSize = 0
       this.currentRow = -1
       this.commodityNum = 0
-      this.member.id = ''
+      this.member.id = 0
       this.member.name = ''
       this.member.point = ''
       this.member.phone = ''
@@ -649,6 +746,7 @@ export default {
   * ctrl+m清空会员信息
   * ctrl+b取单
   * ctrl+c挂单
+  * ctrl+x使用积分
   * up/down光标栏上/下移
   * ctrl+up/ctrl+down光标商品数量加/减
   * ctrl+n聚焦到表格中的一行修改数量
@@ -683,12 +781,23 @@ export default {
       } else if (e.ctrlKey && e.key === 'F3') {
         this.isRefund = !this.isRefund
       } else if (e.ctrlKey && e.key === 'm') {
+        this.member.id = 0
         this.member.name = ''
         this.member.point = ''
+        let sum = 0
+        let i = 0
+        for (;i < this.rowSize; i++) {
+          sum += this.tableData[i]['sum']
+        }
+        this.form.totalPrice = sum
       } else if (e.ctrlKey && e.key === 'i') {
         this.deleteRow()
+      } else if (e.ctrlKey && e.key === 'b') {
+        this.clickGetPendedButton()
       } else if (e.ctrlKey && e.key === 'c') {
         this.pendOrder()
+      } else if (e.ctrlKey && e.key === 'x') {
+        this.clickUsePointButton()
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         if (this.currentRow >= 0) {
           this.$refs['numInputRef' + this.currentRow].focus()
@@ -738,6 +847,11 @@ export default {
             this.clickPayButton()
           }
         }
+      } else if (e.key === 'Escape') {
+        if (!(this.commodityDialogVisible || this.cashDialogVisible || this.addMemberVisible || this.refundDialogVisible ||
+            this.pendedRecordVisible || this.usePointVisible)) {
+          this.quit()
+        }
       }
     },
     /**
@@ -756,6 +870,9 @@ export default {
     this.tableData = this.placeholderData
     getSupIdById({id: this.id}).then(res => {
       this.query.supId = res.data
+      return getSupermarketById(this.query)
+    }).then(res => {
+      this.pointRatio = res.data.pointRatio
     })
   },
   mounted () {
