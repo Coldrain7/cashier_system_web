@@ -8,6 +8,10 @@ export default {
     2: {
       cashier: ['*'],
       records: ['*']
+    },
+    3: {
+      main: ['classification', 'commodity', 'supplier', 'combination', 'expiration', 'supplier', 'member']
     }
+
   }
 }
