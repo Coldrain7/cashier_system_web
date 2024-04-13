@@ -11,3 +11,8 @@ export const getUserById = query => {
 }
 export const changePassword = user => http.POST('./api/worker/changePassword', user)
 export const getSupIdById = user => http.GET('./api/worker/getSupId', user)
+export const getSupWorkers = query => http.GET(`./api/worker/getSupWorkers/${query.supId}`, query)
+export const getWorkersByName = worker => http.GET('./api/worker/getWorkersByName', worker)
+export const deleteWorkerById = query => http.DELETE(`./api/worker/${query.id}`, query)
+export const updateWorkerById = worker => http.POST('./api/worker/updateWorkerById', worker)
+export const createWorker = worker => http.POST('./api/worker/createWorker', worker)
