@@ -255,7 +255,7 @@ import {getCombinations, getCommodityByBarcode, updateCommodity, getCommodityByI
 import {getSupIdById} from '@api/user'
 import store from '../../../../store'
 export default {
-  name: 'Combination',
+  name: 'combination',
   data () {
     return {
       supId: '',

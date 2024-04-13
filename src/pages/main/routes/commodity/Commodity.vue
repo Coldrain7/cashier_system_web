@@ -514,7 +514,7 @@ import {getSupplierOptions} from '@api/supplier'
 import {getUnitOptions, addUnit, deleteUnitById} from '@api/unit'
 import store from '../../../../store'
 export default {
-  name: 'Commodity',
+  name: 'commodity',
   data () {
     var validateNumber = (rule, value, callback) => {
       if (!/\d+/.test(value)) {

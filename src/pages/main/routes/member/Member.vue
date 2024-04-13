@@ -130,7 +130,7 @@ import {memberPage, updateMember, createMember, deleteMemberById, exportMembers}
 import {getSupIdById} from '@api/user'
 import store from '../../../../store'
 export default {
-  name: 'Member',
+  name: 'member',
   data () {
     var validatePhoneNumber = (rule, value, callback) => {
       if (value === '') {

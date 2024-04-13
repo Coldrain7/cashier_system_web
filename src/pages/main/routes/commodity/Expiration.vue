@@ -185,7 +185,7 @@ import {getSupplierOptions} from '@api/supplier'
 import {searchWarning, updateCommodity} from '@api/commodity'
 import store from '../../../../store'
 export default {
-  name: 'Expiration',
+  name: 'expiration',
   data () {
     var validateNumber = (rule, value, callback) => {
       if (!/^\d+(\.\d+)?$/.test(value)) {

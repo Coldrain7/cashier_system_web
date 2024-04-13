@@ -72,7 +72,7 @@ import {getClaOptions, addClassification, deleteClaById, searchClassifications} 
 import {getSupIdById} from '@api/user'
 import store from '../../../../store'
 export default {
-  name: 'Classification',
+  name: 'classification',
   data () {
     return {
       id: '', // 用户id
