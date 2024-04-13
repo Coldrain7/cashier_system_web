@@ -117,7 +117,7 @@ import store from '../../../../store'
 import {getSupplier, getSupplierById, updateSupplier, createSupplier, deleteById, exportSuppliers} from '@api/supplier'
 import {getSupIdById} from '@api/user'
 export default {
-  name: 'Supplier',
+  name: 'supplier',
   data () {
     var validatePhoneNumber = (rule, value, callback) => {
       if (value === '') {
