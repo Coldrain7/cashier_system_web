@@ -53,7 +53,7 @@ const mainPage = [
       },
       {
         path: 'commodity/supplier',
-        name: 'Supplier',
+        name: 'supplier',
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Supplier.vue'
@@ -61,7 +61,7 @@ const mainPage = [
       },
       {
         path: 'commodity/commodity',
-        name: 'Commodity',
+        name: 'commodity',
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Commodity.vue'
@@ -69,7 +69,7 @@ const mainPage = [
       },
       {
         path: 'commodity/classification',
-        name: 'Classification',
+        name: 'classification',
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Classification.vue'
@@ -77,7 +77,7 @@ const mainPage = [
       },
       {
         path: 'commodity/combination',
-        name: 'Combination',
+        name: 'combination',
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Combination.vue'
@@ -85,7 +85,7 @@ const mainPage = [
       },
       {
         path: 'commodity/expiration',
-        name: 'Expiration',
+        name: 'expiration',
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/commodity/Expiration.vue'
@@ -105,6 +105,21 @@ const mainPage = [
         component: () =>
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/member/Member.vue'
+            )
+      },
+      {
+        path: 'worker/worker',
+        name: 'worker',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/worker/Worker.vue'
+            )
+      }, {
+        path: 'settings/settings',
+        name: 'settings',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/settings/settings.vue'
             )
       }
     ]
