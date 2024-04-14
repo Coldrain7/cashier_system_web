@@ -21,3 +21,6 @@ export const searchCombinations = commodity => http.GET('./api/commodity/searchC
 export const isCombined = commodity => http.GET('./api/commodity/isCombined', commodity)
 export const searchWarning = query => http.POST('./api/commodity/searchWarning', query)
 export const getCommoditiesByKeyword = commodity => http.GET('./api/commodity/getCommoditiesByKeyword', commodity)
+export const getCommoditiesByClaIds = (claIds, query) => http.POSTJson(`./api/commodity/getCommoditiesByClaIds/${query.type}`, claIds)
+export const notIsDiscounts = commodities => http.POSTJson('./api/commodity/notIsDiscounts', commodities)
+export const getNoDiscountCommodities = query => http.GET('./api/commodity/getNoDiscountCommodities', query)
