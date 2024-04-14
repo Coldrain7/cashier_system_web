@@ -10,7 +10,7 @@ export default {
       records: ['*']
     },
     3: {
-      main: ['classification', 'commodity', 'supplier', 'combination', 'expiration', 'supplier', 'member']
+      main: ['classification', 'commodity', 'supplier', 'combination', 'expiration', 'supplier', 'member', 'sale']
     }
 
   }

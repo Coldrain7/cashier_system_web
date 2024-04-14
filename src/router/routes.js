@@ -121,6 +121,13 @@ const mainPage = [
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/settings/settings.vue'
             )
+      }, {
+        path: 'sale/sale',
+        name: 'sale',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/sale/Sale.vue'
+            )
       }
     ]
   }

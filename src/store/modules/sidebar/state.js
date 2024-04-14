@@ -59,6 +59,19 @@ export default {
           ]
         },
         {
+          path: '/main/sale',
+          icon: 'suncaper-menu-unfold',
+          title: '销售',
+          group: 'sale',
+          children: [
+            {
+              path: '/main/sale/sale',
+              icon: 'suncaper-menu-unfold',
+              title: '营业趋势'
+            }
+          ]
+        },
+        {
           path: '/main/worker',
           icon: 'suncaper-menu-unfold',
           title: '员工',
