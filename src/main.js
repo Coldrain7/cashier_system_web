@@ -11,7 +11,10 @@ import App from './App'
 import '@/assets/iconfont-default'
 import router from './router/'
 import store from './store/'
-
+// 引入
+import * as echarts from 'echarts'
+// 全局注册
+Vue.prototype.$echarts = echarts
 Vue.use(Vuebar)
 Vue.use(ElementUI)
 Vue.config.productionTip = false
