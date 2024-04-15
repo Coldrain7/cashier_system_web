@@ -297,7 +297,6 @@ export default {
       return memberPage(this.query)
     }).then(res => {
       this.tableData = res.data.records
-      console.info(this.tableData)
       this.total = res.data.total
     })
   }
