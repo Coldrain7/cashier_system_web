@@ -5,3 +5,4 @@ export const getRecordWithCommodity = query => http.GET('./api/record/getRecordW
 export const getPendedRecords = query => http.GET(`./api/record/getPendedRecords/${query.supId}`, query)
 export const getPendedCommodities = record => http.GET('./api/record/getPendedCommodities', record)
 export const deleteRecordById = record => http.DELETE(`./api/record/${record.id}`, record)
+export const getSale = query => http.POST('./api/record/getSale', query)
