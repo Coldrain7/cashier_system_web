@@ -128,6 +128,22 @@ const mainPage = [
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/sale/Sale.vue'
             )
+      },
+      {
+        path: 'sale/proportion',
+        name: 'proportion',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/sale/Proportion.vue'
+            )
+      },
+      {
+        path: 'sale/records',
+        name: 'records',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/sale/Records.vue'
+            )
       }
     ]
   }

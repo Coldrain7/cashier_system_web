@@ -68,6 +68,16 @@ export default {
               path: '/main/sale/sale',
               icon: 'suncaper-menu-unfold',
               title: '营业趋势'
+            },
+            {
+              path: '/main/sale/proportion',
+              icon: 'suncaper-menu-unfold',
+              title: '分类占比'
+            },
+            {
+              path: '/main/sale/records',
+              icon: 'suncaper-menu-unfold',
+              title: '销售单据'
             }
           ]
         },
