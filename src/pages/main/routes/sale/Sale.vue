@@ -131,49 +131,60 @@ export default {
     }
   },
   methods: {
+    isMoreThanOneYear (beginDate, endDate) {
+      let date1 = new Date(beginDate)
+      let date2 = new Date(endDate)
+      let diff = Math.abs(date1.getTime() - date2.getTime())
+      let oneYear = 1000 * 60 * 60 * 24 * 365 // 一年的毫秒数，这里假设为365天，实际上可能有闰年等情况需要考虑
+      return diff > oneYear
+    },
     getSaleData () {
-      getSale(this.query).then(res => {
-        if (res.status) {
-          if (this.query.mode === 0) {
-            for (let i = 0; i < res.data.length; i++) {
-              res.data[i].time = res.data[i].beginDate
-              res.data[i].profitRatio = Math.round((res.data[i].profitRatio) * 10000) / 100 + '%'
+      if (this.isMoreThanOneYear(this.query.beginDate, this.query.endDate)) {
+        this.$message.warning('只能统计一年以内的数据')
+      } else {
+        getSale(this.query).then(res => {
+          if (res.status) {
+            if (this.query.mode === 0) {
+              for (let i = 0; i < res.data.length; i++) {
+                res.data[i].time = res.data[i].beginDate
+                res.data[i].profitRatio = Math.round((res.data[i].profitRatio) * 10000) / 100 + '%'
+              }
+            } else if (this.query.mode === 1) { // 按周查询
+              for (let i = 0; i < res.data.length; i++) {
+                const beginDate = new Date(res.data[i].beginDate)
+                const endDate = new Date(res.data[i].endDate)
+                res.data[i].time = (beginDate.getMonth() + 1) + '-' + beginDate.getDate() + '~' +
+                    (endDate.getMonth() + 1) + '-' + endDate.getDate()
+                res.data[i].profitRatio = Math.round((res.data[i].profitRatio) * 10000) / 100 + '%'
+              }
+            } else if (this.query.mode === 2) { // 按月查询
+              for (let i = 0; i < res.data.length; i++) {
+                const beginDate = new Date(res.data[i].beginDate)
+                res.data[i].time = beginDate.getFullYear() + '-' + (beginDate.getMonth() + 1)
+                res.data[i].profitRatio = Math.round((res.data[i].profitRatio) * 10000) / 100 + '%'
+              }
             }
-          } else if (this.query.mode === 1) { // 按周查询
-            for (let i = 0; i < res.data.length; i++) {
-              const beginDate = new Date(res.data[i].beginDate)
-              const endDate = new Date(res.data[i].endDate)
-              res.data[i].time = (beginDate.getMonth() + 1) + '-' + beginDate.getDate() + '~' +
-                      (endDate.getMonth() + 1) + '-' + endDate.getDate()
-              res.data[i].profitRatio = Math.round((res.data[i].profitRatio) * 10000) / 100 + '%'
+            this.seriesData = [[], [], []]
+            let arr = []
+            for (let item of res.data) {
+              arr.push(item.time)
+              let entity1 = {}
+              entity1.value = item.totalPayment
+              this.seriesData[0].push(entity1)
+              let entity2 = {}
+              entity2.value = item.totalNumber
+              this.seriesData[1].push(entity2)
+              let entity3 = {}
+              entity3.value = item.totalProfit
+              this.seriesData[2].push(entity3)
             }
-          } else if (this.query.mode === 2) { // 按月查询
-            for (let i = 0; i < res.data.length; i++) {
-              const beginDate = new Date(res.data[i].beginDate)
-              res.data[i].time = beginDate.getFullYear() + '-' + (beginDate.getMonth() + 1)
-              res.data[i].profitRatio = Math.round((res.data[i].profitRatio) * 10000) / 100 + '%'
-            }
+            this.option.xAxis.data = arr
+            this.tableData = res.data
+          } else {
+            this.$message.error(res.message)
           }
-          this.seriesData = [[], [], []]
-          let arr = []
-          for (let item of res.data) {
-            arr.push(item.time)
-            let entity1 = {}
-            entity1.value = item.totalPayment
-            this.seriesData[0].push(entity1)
-            let entity2 = {}
-            entity2.value = item.totalNumber
-            this.seriesData[1].push(entity2)
-            let entity3 = {}
-            entity3.value = item.totalProfit
-            this.seriesData[2].push(entity3)
-          }
-          this.option.xAxis.data = arr
-          this.tableData = res.data
-        } else {
-          this.$message.error(res.message)
-        }
-      })
+        })
+      }
     },
     // option = {
     //   xAxis: {
@@ -235,7 +246,6 @@ export default {
     updateChart () {
       let echarts = this.$echarts.getInstanceByDom(document.getElementById('data'))
       if (echarts) {
-        console.info(this.option.xAxis.data)
         echarts.setOption(this.option, true)
       }
     }
