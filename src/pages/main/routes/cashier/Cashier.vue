@@ -338,7 +338,7 @@ export default {
         type: 0// 类型，比如是否是挂单
       },
       member: {
-        id: 0,
+        id: '',
         name: '',
         point: '',
         phone: ''
@@ -636,6 +636,7 @@ export default {
       this.currentRow++
       this.tableData = this.commodityData.concat(this.placeholderData.slice(0, this.max(18 - this.rowSize, 0)))
       this.commodityDialogVisible = false
+      this.setFocus()
     },
     quit () {
       // 清空本地浏览器用户信息
