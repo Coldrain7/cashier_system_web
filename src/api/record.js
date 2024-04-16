@@ -6,3 +6,5 @@ export const getPendedRecords = query => http.GET(`./api/record/getPendedRecords
 export const getPendedCommodities = record => http.GET('./api/record/getPendedCommodities', record)
 export const deleteRecordById = record => http.DELETE(`./api/record/${record.id}`, record)
 export const getSale = query => http.POST('./api/record/getSale', query)
+export const getProportion = query => http.POST('./api/record/getProportion', query)
+export const getSupRecords = query => http.GET(`./api/record/getSupRecords/${query.supId}`, query)
