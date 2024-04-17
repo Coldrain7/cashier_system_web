@@ -340,6 +340,13 @@ export default {
           ]}
         echarts.setOption(newDataOption, true)
       }
+    },
+    disposeEcharts (str) {
+      let echarts = this.$echarts.getInstanceByDom(document.getElementById(str))
+      if (echarts) {
+        // 销毁Echarts实例
+        echarts.dispose()
+      }
     }
   },
   created () {
@@ -359,6 +366,11 @@ export default {
       this.query.supId = res.data
       this.getProportion()
     })
+  },
+  beforeDestroy () {
+    this.disposeEcharts('sale')
+    this.disposeEcharts('number')
+    this.disposeEcharts('profit')
   },
   mounted () {
     this.initEcharts()

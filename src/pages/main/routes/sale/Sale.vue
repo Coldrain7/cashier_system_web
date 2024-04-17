@@ -186,18 +186,6 @@ export default {
         })
       }
     },
-    // option = {
-    //   xAxis: {
-    //     data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    //   },
-    //   yAxis: {},
-    //   series: [
-    //     {
-    //       type: 'bar',
-    //       data: [23, 24, 18, 25, 27, 28, 25]
-    //     }
-    //   ]
-    // }
     handleCheckChange () {
       if (this.typeList.length === 0) { // 没有选择折线图或者柱状图
         this.$message.warning('未选择视图类型')
@@ -269,6 +257,13 @@ export default {
   },
   mounted () {
     this.initEcharts()
+  },
+  beforeDestroy () {
+    let echarts = this.$echarts.getInstanceByDom(document.getElementById('data'))
+    if (echarts) {
+      // 销毁Echarts实例
+      echarts.dispose()
+    }
   },
   watch: {
     // 侦听 option 对象的变化
