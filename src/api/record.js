@@ -8,3 +8,5 @@ export const deleteRecordById = record => http.DELETE(`./api/record/${record.id}
 export const getSale = query => http.POST('./api/record/getSale', query)
 export const getProportion = query => http.POST('./api/record/getProportion', query)
 export const getSupRecords = query => http.GET(`./api/record/getSupRecords/${query.supId}`, query)
+export const getSellingByComId = query => http.POST('./api/record/getSellingByComId', query)
+export const predictSelling = data => http.POST('./api/record/predictSelling', data)
