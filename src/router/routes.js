@@ -144,6 +144,22 @@ const mainPage = [
             import(
               /* webpackChunkName: "First" */ '../pages/main/routes/sale/Records.vue'
             )
+      },
+      {
+        path: 'sale/predictSelling',
+        name: 'predictSelling',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/sale/PredictSelling.vue'
+            )
+      },
+      {
+        path: 'event/event',
+        name: 'event',
+        component: () =>
+            import(
+              /* webpackChunkName: "First" */ '../pages/main/routes/event/Event.vue'
+            )
       }
     ]
   }

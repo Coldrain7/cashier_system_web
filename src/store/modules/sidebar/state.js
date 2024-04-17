@@ -78,8 +78,18 @@ export default {
               path: '/main/sale/records',
               icon: 'suncaper-menu-unfold',
               title: '销售单据'
+            },
+            {
+              path: '/main/sale/predictSelling',
+              icon: 'suncaper-menu-unfold',
+              title: '销售预测'
             }
           ]
+        },
+        {
+          path: '/main/event/event',
+          icon: 'suncaper-menu-unfold',
+          title: '营销活动'
         },
         {
           path: '/main/worker',
@@ -143,6 +153,34 @@ export default {
               title: '供应商'
             }
           ]
+        },
+        {
+          path: '/main/sale',
+          icon: 'suncaper-menu-unfold',
+          title: '销售',
+          group: 'sale',
+          children: [
+            {
+              path: '/main/sale/sale',
+              icon: 'suncaper-menu-unfold',
+              title: '营业趋势'
+            },
+            {
+              path: '/main/sale/proportion',
+              icon: 'suncaper-menu-unfold',
+              title: '分类占比'
+            },
+            {
+              path: '/main/sale/records',
+              icon: 'suncaper-menu-unfold',
+              title: '销售单据'
+            }
+          ]
+        },
+        {
+          path: '/main/event/event',
+          icon: 'suncaper-menu-unfold',
+          title: '营销活动'
         },
         {
           path: '/main/member',

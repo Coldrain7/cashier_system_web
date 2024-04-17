@@ -11,7 +11,7 @@ export default {
     },
     3: {
       main: ['classification', 'commodity', 'supplier', 'combination', 'expiration', 'supplier',
-        'member', 'sale', 'proportion', 'records']
+        'member', 'sale', 'proportion', 'records', 'predictSelling', 'event']
     }
 
   }
