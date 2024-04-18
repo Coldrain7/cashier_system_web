@@ -23,21 +23,24 @@
         icon="suncaper-user"
         class="text-center"
       />
-      <span class="text-center" >
-          {{userName}}
-        </span>
-      <a
-        href="javascript:;"
-        class="header-logout"
-        @click="quit"
-        role="button"
-      >
-        <s-tooltip effect="dark" content="退出" placement="bottom">
-          <s-icon
-            icon="suncaper-quit"
-          />
-        </s-tooltip>
-      </a>
+<!--      <span class="text-center" >-->
+<!--          {{userName}}-->
+<!--        </span>-->
+<!--      <a-->
+<!--        href="javascript:;"-->
+<!--        class="el-icon-switch-button"-->
+<!--        @click="quit"-->
+<!--        role="button"-->
+<!--      >-->
+<!--        <s-tooltip effect="dark" content="退出" placement="bottom">-->
+<!--          <s-icon-->
+<!--            icon="suncaper-quit"-->
+<!--          />-->
+<!--        </s-tooltip>-->
+<!--      </a>-->
+      <!--修改后的代码-->
+      <el-button icon="el-icon-switch-button" type="text" size="medium" style="color: #ff4444"
+                 @click="quit">退出</el-button>
     </div>
   </div>
 </template>

@@ -46,7 +46,7 @@ export default {
             type: 'success'
           })
           if (res.data.type === 1) {
-            this.$router.push({path: '/main/overview'})
+            this.$router.push({path: '/main/commodity/commodity'})
           } else if (res.data.type === 2) {
             this.$router.push({path: '/cashier'})
           } else {
