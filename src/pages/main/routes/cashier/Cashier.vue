@@ -516,7 +516,12 @@ export default {
         }
       })
       if (this.member.id > 0) {
-        this.member.point -= this.form.totalPrice
+        for (let i = 0; i < this.rowSize; i++) {
+          if (this.tableData[i].isDiscount) {
+            this.member.point -= this.tableData[i].nowPrice
+          }
+        }
+        // this.member.point -= this.form.totalPrice
         let member = this.member
         member.supId = this.query.supId
         updateMember(member).then(res => {
@@ -547,7 +552,12 @@ export default {
             }
           })
           if (this.member.id > 0) {
-            this.member.point += this.form.realPayment
+            for (let i = 0; i < this.rowSize; i++) {
+              if (this.tableData[i].isDiscount) {
+                this.member.point += this.tableData[i].nowPrice
+              }
+            }
+            // this.member.point += this.form.realPayment
             let member = this.member
             member.supId = this.query.supId
             updateMember(member).then(res => {
@@ -628,6 +638,7 @@ export default {
       commodity.name = this.dialogTableData[index].name
       commodity.price = this.dialogTableData[index].price
       commodity.nowPrice = this.dialogTableData[index].price
+      commodity.isDiscount = this.dialogTableData[index].isDiscount
       commodity.num = 1
       commodity.sum = this.dialogTableData[index].price
       this.form.totalPrice += commodity.price
@@ -636,6 +647,7 @@ export default {
       this.currentRow++
       this.tableData = this.commodityData.concat(this.placeholderData.slice(0, this.max(18 - this.rowSize, 0)))
       this.commodityDialogVisible = false
+      console.info(this.tableData)
       this.setFocus()
     },
     quit () {
@@ -686,6 +698,7 @@ export default {
             commodity.nowPrice = res.data[0].price
             commodity.num = 1
             commodity.sum = res.data[0].price
+            commodity.isDiscount = res.data[0].isDiscount
             this.form.totalPrice += commodity.price
             this.commodityData.push(commodity)
             this.rowSize++
